@@ -3,6 +3,7 @@
     just --list
 
 # Prepare for and do an initial build of the system named HOST.
+[confirm("Are you sure you want to initialize this system with this configuration? (y/n):")]
 @init host:
     @# Creating directories expected by this configuration...
     mkdir -p ~/.dotfiles/guix/gen
