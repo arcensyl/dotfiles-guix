@@ -9,7 +9,8 @@
   #:use-module (gnu services sound)
   #:use-module (gnu home)
   #:use-module (guix)
-  #:use-module (nongnu packages linux))
+  #:use-module (nongnu packages linux)
+  #:use-module (my utils units))
 
 ;; Settings for this system.
 
@@ -114,3 +115,17 @@
    (file-systems (append file-system-queue %base-file-systems))
 
    (swap-devices swap-space-queue)))
+
+(define (apply-core-unit)
+  (use-packages
+   ;; Libraries
+   "ncurses"
+
+   ;; CLI Essentials
+   "fastfetch"
+
+   ;; Config-related Tools
+   "git"
+   "just"))
+
+(register-unit 'core apply-core-unit)
