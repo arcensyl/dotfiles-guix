@@ -9,14 +9,16 @@
 (use-modules (ice-9 format)
              (my core))
 
-(define host-config-file (string-append "./hosts/" hostname "/config.scm"))
-(define host-hardware-file (string-append "./hosts/" hostname "/hardware.scm"))
+(define host-config-file (string-append "./hosts/" system-name "/config.scm"))
+(define host-hardware-file (string-append "./hosts/" system-name "/hardware.scm"))
 
 (unless (file-exists? host-config-file)
-  (error (format #f "No 'config.scm' file found for the host '~a'." hostname)))
+  (error (format #f "No 'config.scm' file found for the host '~a'." system-name)))
 
 (unless (file-exists? host-hardware-file)
-  (error (format #f "No 'hardware.scm' file found for the host '~a'." hostname)))
+  (error (format #f "No 'hardware.scm' file found for the host '~a'." system-name)))
 
 (load host-config-file)
 (load host-hardware-file)
+
+(make-operating-system)
