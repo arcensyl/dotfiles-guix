@@ -7,7 +7,8 @@
 (add-to-load-path "./modules")
 
 (use-modules (ice-9 format)
-             (my core))
+             (my core)
+             (my utils units))
 
 (define host-config-file (string-append "./hosts/" system-name "/config.scm"))
 (define host-hardware-file (string-append "./hosts/" system-name "/hardware.scm"))
@@ -21,4 +22,5 @@
 (load host-config-file)
 (load host-hardware-file)
 
+(apply-all-units)
 (make-operating-system)
