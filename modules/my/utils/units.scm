@@ -12,34 +12,34 @@
   (unless (procedure? applicator)
     (error "A configuration unit's applicator must be a procedure"))
 
-  (hashq-set! registered-units name applicator))
+  (hash-set! registered-units name applicator))
 
 (define* (use-unit unit #:rest args)
   (unless (or (symbol? unit) (list-of-symbols? unit))
     (error "A configuration unit's identifier must be a symbol or list of symbols"))
 
-  (unless (hashq-ref registered-units unit)
+  (unless (hash-ref registered-units unit)
     (error (format #f "Unit '~a' not found" unit)))
 
-  (hashq-set! unit-queue unit args))
+  (hash-set! unit-queue unit args))
 (export use-unit)
 
 (define-public (ensure-unit unit)
   (unless (or (symbol? unit) (list-of-symbols? unit))
     (error "A configuration unit's identifier must be a symbol or list of symbols"))
 
-  (unless (hashq-ref registered-units unit)
+  (unless (hash-ref registered-units unit)
     (error (format #f "Configuration unit '~a' not found" unit)))
 
-  (let ((args (hashq-ref unit-queue unit)))
+  (let ((args (hash-ref unit-queue unit)))
     (if args
-        (hashq-set! unit-queue unit args)
-        (hashq-set! unit-queue unit '()))))
+        (hash-set! unit-queue unit args)
+        (hash-set! unit-queue unit '()))))
 
 (define-public (apply-all-units)
   (hash-for-each
    (lambda (unit args)
-     (let ((applicator (hashq-ref registered-units unit)))
+     (let ((applicator (hash-ref registered-units unit)))
        (apply applicator args)))
    unit-queue))
 
@@ -47,4 +47,4 @@
   (unless (or (symbol? unit) (list-of-symbols? unit))
     (error "A configuration unit's identifier must be a symbol or list of symbols"))
 
-  (if (hashq-get-handle registered-units unit) #t #f))
+  (if (hash-get-handle registered-units unit) #t #f))
