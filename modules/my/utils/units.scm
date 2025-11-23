@@ -1,6 +1,6 @@
 (define-module (my utils units)
   #:use-module (gnu)
-  #:use-module (my utils checks))
+  #:use-module (my utils misc))
 
 (define registered-units (make-hash-table))
 (define unit-queue (make-hash-table))

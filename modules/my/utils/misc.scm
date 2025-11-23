@@ -1,4 +1,4 @@
-(define-module (my utils checks))
+(define-module (my utils misc))
 
 (define (all-symbols? lst)
   (cond
