@@ -116,7 +116,7 @@
 
    (swap-devices swap-space-queue)))
 
-(define (apply-core-unit)
+(define-unit (core)
   (use-packages
    ;; Libraries
    "ncurses"
@@ -127,5 +127,3 @@
    ;; Config-related Tools
    "git"
    "just"))
-
-(register-unit 'core apply-core-unit)

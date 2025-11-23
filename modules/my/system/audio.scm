@@ -5,10 +5,8 @@
   #:use-module (my core)
   #:use-module (my utils units))
 
-(define (apply-audio-unit)
+(define-unit ((system audio))
   (use-home-service (service home-dbus-service-type))
   (use-home-service (service home-pipewire-service-type))
 
   (use-home-packages "wireplumber" "pulseaudio"))
-
-(register-unit '(system audio) apply-audio-unit)
