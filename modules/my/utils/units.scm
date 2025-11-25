@@ -40,8 +40,8 @@
 (export define-unit*)
 
 (define-public (hook-unit main hooked)
-  (unless (or (symbol? main) (list-of-symbols? main)
-              (symbol? hooked) (list-of-symbols? hooked))
+  (unless (and (or (symbol? main) (list-of-symbols? main))
+               (or (symbol? hooked) (list-of-symbols? hooked)))
     (error "A configuration unit's identifier must be a symbol or list of symbols"))
 
   (unless (hash-ref registered-units hooked)
@@ -67,15 +67,11 @@
   (hash-set! unit-queue unit args))
 (export use-unit)
 
+;; FIXME: We shouldn't modify a hash map we're iterrating over.
 (define (resolve-unit-queue)
-  (let ((resolved-queue (make-hash-table))
+  (let ((buffer '())
         (final-iteration #f))
 
-    (hash-for-each
-     (lambda (unit args)
-       (hash-set! resolved-queue unit args))
-     unit-queue)
-    
     (let loop ()
       (set! final-iteration #t)
       
@@ -83,15 +79,20 @@
        (lambda (unit _)
          (for-each
           (lambda (hooked)
-            (unless (hash-ref resolved-queue hooked)
+            (unless (hash-ref unit-queue hooked)
               (set! final-iteration #f)
-              (hash-set! resolved-queue hooked '())))
+              ;;(hash-set! resolved-queue hooked '())))
+              (set! buffer (cons hooked buffer))))
           (config-unit-hooked-units (hash-ref registered-units unit))))
-       resolved-queue)
+       unit-queue)
 
-      (unless final-iteration (loop)))
+      (for-each
+       (lambda (item)
+         (hash-set! unit-queue item '()))
+       buffer)
 
-    (set! unit-queue resolved-queue)))
+      (set! buffer '())
+      (unless final-iteration (loop)))))
 
 (define-public (apply-all-units)
   (resolve-unit-queue)
