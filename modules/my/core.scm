@@ -8,9 +8,11 @@
   #:use-module (gnu services xorg)
   #:use-module (gnu services sound)
   #:use-module (gnu home)
+  #:use-module (gnu home services)
   #:use-module (guix)
   #:use-module (nongnu packages linux)
-  #:use-module (my utils units))
+  #:use-module (my utils units)
+  #:use-module (my system shells))
 
 ;; Settings for this system.
 
@@ -23,6 +25,7 @@
 (define-public system-keyboard-layout (keyboard-layout "us"))
 
 ;; Settings for the main user, or "master", of this system.
+
 (define-public master-name "master")
 (define-public master-comment "Master User")
 (define-public master-home-directory "/home/master")
@@ -71,7 +74,41 @@
     (error "Item passed to 'use-swap-space' was not swap space"))
   (set! swap-space-queue (cons swap-space swap-space-queue)))
 
+;; (define-public (provide-env-var variable value)
+;;   (unless (and (string? variable) (string? value))
+;;     (error "Both an environment variable and its value must be a string"))
+;;   (hash-set! env-var-queue variable value))
+
+;; (define* (extend-provided-env-var variable extension #:key base (separator ":"))
+;;   (unless (and (string? variable)
+;;                (string? extension)
+;;                (or (string? base) (eq? base #f))
+;;                (string? separator))
+;;     (error "All arguments of 'extend-provided-env-var' must be strings"))
+
+;;   (let* ((prev-val (hash-ref env-var-queue variable))
+;;          (actual-base (or prev-val base (string-append "$" variable)))
+;;          (value (string-append extension separator actual-base)))
+;;     (hash-set! env-var-queue variable value)))
+;; (export extend-provided-env-var)
+
+;; (define my-home-provided-env-vars-service
+;;   (simple-service 'my-home-provided-env-vars
+;;                   home-environment-variables-service-type
+;;                   #~(hash-map->list
+;;                      (lambda (var val) (cons var val))
+;;                      env-var-queue)))
+
 (define-public (make-operating-system)
+  ;; (provide-env-var "GUIX_HOSTNAME" system-name)
+
+  ;; (use-home-service
+  ;;  (simple-service 'my-home-provided-env-vars
+  ;;                  home-environment-variables-service-type
+  ;;                  (hash-map->list
+  ;;                   (lambda (var val) (cons var val))
+  ;;                   env-var-queue)))
+  
   (use-service
    (service guix-home-service-type
             (list (list master-name
@@ -117,6 +154,14 @@
    (swap-devices swap-space-queue)))
 
 (define-unit (core)
+  (unless (using-unit? '(system bash))
+    (error "The 'core' unit expects a shell unit to also be in use"))
+
+  (provide-env-var "GUIX_HOSTNAME" system-name)
+  (provide-env-var-segment "PATH" "$HOME/.dotfiles/guix/scripts")
+
+  (provide-shell-alias "gx" "guix")
+  
   (use-packages
    ;; Libraries
    "ncurses"
