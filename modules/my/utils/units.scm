@@ -7,6 +7,8 @@
 (define unit-queue (make-hash-table))
 (define unit-finalization-marker #f)
 
+(define after-unit-calls '())
+
 (define-record-type <config-unit>
   (make-config-unit applicator hooked-units)
   config-unit?
@@ -67,7 +69,20 @@
   (hash-set! unit-queue unit args))
 (export use-unit)
 
-;; FIXME: We shouldn't modify a hash map we're iterrating over.
+(define* (call-after-units func #:rest args)
+  (unless (procedure? func)
+    (error "FUNC, passed to 'call-after-units', must be a procedure"))
+  
+  (set! after-unit-calls (cons (cons func args) after-unit-calls)))
+(export call-after-units)
+
+(define-syntax eval-after-units
+  (syntax-rules ()
+    ((_ body ...)
+     (call-after-units
+      (lambda () body ...)))))
+(export eval-after-units)
+
 (define (resolve-unit-queue)
   (let ((buffer '())
         (final-iteration #f))
@@ -81,7 +96,6 @@
           (lambda (hooked)
             (unless (hash-ref unit-queue hooked)
               (set! final-iteration #f)
-              ;;(hash-set! resolved-queue hooked '())))
               (set! buffer (cons hooked buffer))))
           (config-unit-hooked-units (hash-ref registered-units unit))))
        unit-queue)
@@ -102,7 +116,12 @@
    (lambda (unit args)
      (let ((unit (hash-ref registered-units unit)))
        (apply (config-unit-applicator unit) args)))
-   unit-queue))
+   unit-queue)
+
+  (for-each
+   (lambda (call)
+     (apply (car call) (cdr call)))
+   after-unit-calls))
 
 (define-public (using-unit? unit)
   (unless (or (symbol? unit) (list-of-symbols? unit))
