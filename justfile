@@ -9,10 +9,13 @@ alias up := update
 [confirm("Are you sure you want to initialize this system with this configuration? (y/n):")]
 @init host:
     @# Creating directories expected by this configuration...
-    mkdir -p ~/.dotfiles/guix/gen
+    mkdir -p ~/.dotfiles/guix/gen/auth
     mkdir -p ~/.dotfiles/live
     mkdir -p ~/.util
     mkdir -p ~/.config/guix
+    
+    @# Pulling down required resources from the internet... 
+    curl -o gen/auth/nonguix.pub 'https://substitutes.nonguix.org/signing-key.pub'
     
     @# Deploying unmanaged symlinks...
     ln -sf ~/.dotfiles/guix/channels.scm ~/.config/guix/channels.scm
@@ -30,7 +33,7 @@ alias up := update
 # Rebuild this system to apply any configuration changes.
 @rebuild:
     @# Rebuilding system...
-    GUIX_HOSTNAME="$(hostname)" sudo -E guix system reconfigure main.scm
+    sudo -E guix system reconfigure main.scm
     @# System rebuilt.
 
 # Update this system by fetching any new package versions and doing a rebuild.
@@ -39,11 +42,11 @@ alias up := update
     guix pull
     
     @# Pull complete. Rebuilding system...
-    GUIX_HOSTNAME="$(hostname)" sudo -E guix system reconfigure main.scm
+    sudo -E guix system reconfigure main.scm
     @# System updated. You should consider rebooting soon.
 
 # Test this configuration by doing a dry run of a system build.
 @test:
     @# Simulating system build...
-    GUIX_HOSTNAME="$(hostname)" guix system reconfigure --dry-run main.scm
+    guix system reconfigure --dry-run main.scm
     @# This system can be built without errors.

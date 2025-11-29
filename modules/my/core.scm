@@ -39,6 +39,9 @@
 (define file-system-queue '())
 (define swap-space-queue '())
 
+(define substitute-server-queue '())
+(define substitute-key-queue '())
+
 (define (process-use-package-arg package)
   (cond ((package? package) package)
         ((string? package) (specification->package package))
@@ -74,6 +77,16 @@
     (error "Item passed to 'use-swap-space' was not swap space"))
   (set! swap-space-queue (cons swap-space swap-space-queue)))
 
+(define-public (use-substitute-server address)
+  (unless (string? address)
+    (error "ADDRESS, passed to 'use-substitute-server', must be a string"))
+  (set! substitute-server-queue (cons address substitute-server-queue)))
+
+(define-public (use-substitute-key key)
+  (unless (file-like? key)
+    (error "KEY, passed to 'use-substitute-key', must be a file-like object"))
+  (set! substitute-key-queue (cons key substitute-key-queue)))
+
 (define-public (make-operating-system)
   (use-service
    (service guix-home-service-type
@@ -104,8 +117,17 @@
     (append service-queue
             (modify-services %desktop-services
                              (delete gdm-service-type)
-                             (delete pulseaudio-service-type))))
+                             (delete pulseaudio-service-type)
 
+                             (guix-service-type config => (guix-configuration
+                                                           (inherit config)
+                                                           (substitute-urls
+                                                            (append substitute-server-queue
+                                                                    %default-substitute-urls))
+                                                           (authorized-keys
+                                                            (append substitute-key-queue
+                                                                    %default-authorized-guix-keys)))))))
+   
    (packages
     (append (hash-map->list (lambda (key _) key) package-queue)
             %base-packages))
@@ -123,6 +145,9 @@
   (unless (using-unit? '(system bash))
     (error "The 'core' unit expects a shell unit to also be in use"))
 
+  (use-substitute-server "https://substitutes.nonguix.org")
+  (use-substitute-key (local-file "../../gen/auth/nonguix.pub"))
+  
   (provide-env-var "GUIX_HOSTNAME" system-name)
   (provide-env-var-segment "PATH" "$HOME/.dotfiles/guix/scripts")
 
