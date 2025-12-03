@@ -1,0 +1,9 @@
+#!/bin/sh
+
+if [[ -z "$1" ]]; then
+    echo "Error: At least one package must be specified!"
+    exit 1
+fi
+
+# Enter a shell with all the specified packages.
+guix shell $@

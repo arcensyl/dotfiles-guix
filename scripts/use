@@ -1,0 +1,9 @@
+#!/bin/sh
+
+if [[ -z "$1" ]]; then
+    echo "Error: Program not specified!"
+    exit 1
+fi
+
+# Run the package, with all remaining arguments passed to it.
+guix shell "$1" -- $@
