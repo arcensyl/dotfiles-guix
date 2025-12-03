@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [[ -z "$1" ]]; then
+    echo "Error: Package not specified!"
+    exit 1
+fi
+
+# Build the package, saving its path that's inside '/gnu/store/'.
+store_path="$(guix build "$1")"
+
+# Create a symlink, in the current directory, that points to this package.
+ln -s "$store_path" "$1"
