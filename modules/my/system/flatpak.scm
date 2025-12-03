@@ -38,13 +38,30 @@
 
   ;; The 'source' field refers to the remote that provides this Flatpak.
   (source flatpak-source
-          (default %default-flatpak-remote-name)))
+          (default %default-flatpak-remote-name))
+
+  (arch flatpak-arch
+        (default ""))
+
+  (branch flatpak-branch
+          (default "")))
 (export flatpak)
+
+;; (define (new-flatpak-alist config)
+;;   (map
+;;    (lambda (pkg)
+;;      (cons (flatpak-id pkg) (flatpak-source pkg)))
+;;    (my-home-flatpak-configuration-flatpaks config)))
 
 (define (new-flatpak-alist config)
   (map
    (lambda (pkg)
-     (cons (flatpak-id pkg) (flatpak-source pkg)))
+     (cons
+      (flatpak-id pkg)
+      (list
+       (cons 'source (flatpak-source pkg))
+       (cons 'arch (flatpak-arch pkg))
+       (cons 'branch (flatpak-branch pkg)))))
    (my-home-flatpak-configuration-flatpaks config)))
 
 (define (my-home-flatpak-activation config)
@@ -98,28 +115,47 @@
               (lambda ()
                 (apply system* flatpak-bin args))))))
 
+      ;; (define (system-flatpak-remotes)
+      ;;   (string-split
+      ;;    (run-flatpak-command-with-output "remotes" "--columns=name")
+      ;;    #\newline))
+
       (define (system-flatpak-remotes)
-        (string-split
-         (run-flatpak-command-with-output "remotes" "--columns=name")
-         #\newline))
+        (let ((output (run-flatpak-command-with-output "remotes" "--columns=name")))
+          (if (not (equal? output ""))
+              (string-split output #\newline)
+              '())))
+
+      ;; (define (system-flatpak-apps)
+      ;;   (string-split
+      ;;    (run-flatpak-command-with-output "list" "--user" "--app" "--columns=application")
+      ;;    #\newline))
+
+      (define (system-flatpaks)
+        (let ((output (run-flatpak-command-with-output "list" "--user" "--columns=application")))
+          (if (not (equal? output ""))
+              (string-split output #\newline)
+              '())))
 
       (define (system-flatpak-apps)
-        (string-split
-         (run-flatpak-command-with-output "list" "--user" "--app" "--columns=application")
-         #\newline))
+        (let ((output (run-flatpak-command-with-output "list" "--user" "--app" "--columns=application")))
+          (if (not (equal? output ""))
+              (string-split output #\newline)
+              '())))
 
+      (define (simple-flatpak->ref id data)
+        (let ((arch (assq-ref data 'arch))
+              (branch (assq-ref data 'branch)))
+          (string-append id "/" arch "/" branch)))
+      
       ;; The actual Flatpak management code begins here.
       
       (let ((preserve? #$(my-home-flatpak-configuration-preserve? config))
-            (prev-flatpaks (list->hash-set (system-flatpak-apps)))
+            (prev-flatpaks (list->hash-set (system-flatpaks)))
+            (prev-flatpak-apps (list->hash-set (system-flatpak-apps)))
             (new-flatpaks (alist->hash-map '#$(new-flatpak-alist config)))
             (prev-remotes (system-flatpak-remotes))
             (new-remotes (alist->hash-map '#$(my-home-flatpak-configuration-remotes config))))
-        ;; HACK: Due to a quirk of 'string-split', an empty string becomes a list with a single item.
-        ;; If this system has no Flatpaks, the hash map will erroneously have an empty string key.
-        ;; This ensures that erroneous key is removed, and the hash map will be empty when it should be.
-        (hash-remove! prev-flatpaks "")
-        
         (format #t "Adding any new Flatpak remotes...~%")
         (hash-for-each
          (lambda (name link)
@@ -132,13 +168,13 @@
 
         (format #t "Installing any new Flatpak applications...~%")
         (hash-for-each
-         (lambda (app remote)
+         (lambda (app data)
            (unless (hash-get-handle prev-flatpaks app)
              (run-flatpak-command "install"
                                   "--user"
                                   "--noninteractive"
-                                  remote
-                                  app)))
+                                  (assq-ref data 'source)
+                                  (simple-flatpak->ref app data))))
          new-flatpaks)
  
         (unless preserve?
@@ -150,7 +186,7 @@
                                     "--user"
                                     "--noninteractive"
                                     app)))
-           prev-flatpaks)
+           prev-flatpak-apps)
 
           (format #t "Removing all unused Flatpak runtimes...~%")
           (run-flatpak-command "remove"
