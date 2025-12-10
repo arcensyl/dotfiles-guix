@@ -11,6 +11,18 @@
       (all-symbols? var)
       #f))
 
+(define-syntax boolean->true-or-false
+  (syntax-rules ()
+    ((_ bool)
+     (if bool "true" "false"))))
+(export boolean->true-or-false)
+
+(define-syntax boolean->yes-or-no
+  (syntax-rules ()
+    ((_ bool)
+     (if bool "yes" "no"))))
+(export boolean->yes-or-no)
+
 (define* (list->hash-set list #:optional (insert-fn hash-set!) (value #t))
   (let ((table (make-hash-table (length list))))
     (for-each
