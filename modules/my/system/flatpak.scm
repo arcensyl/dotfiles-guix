@@ -1,4 +1,5 @@
 (define-module (my system flatpak)
+  #:use-module (srfi srfi-1)
   #:use-module (ice-9 popen)
   #:use-module (ice-9 textual-ports)
   #:use-module (gnu)
@@ -29,6 +30,17 @@
   (preserve? my-home-flatpak-configuration-preserve?
              (default #f)))
 (export my-home-flatpak-configuration)
+
+(define-record-type* <my-home-flatpak-extension>
+  my-home-flatpak-extension make-my-home-flatpak-extension
+  my-home-flatpak-extension?
+
+  (remotes my-home-flatpak-extension-remotes
+           (default '()))
+
+  (flatpaks my-home-flatpak-extension-flatpaks
+            (default '())))
+(export my-home-flatpak-extension)
 
 (define-record-type* <flatpak>
   flatpak make-flatpak
@@ -224,7 +236,24 @@
                                  "/var/lib/flatpak/exports/share:$HOME/.local/share/flatpak/exports/share:$XDG_DATA_DIRS"))))
      
      (service-extension home-activation-service-type
-                        my-home-flatpak-activation)))))
+                        my-home-flatpak-activation)))
+
+   (compose
+    (lambda (extensions)
+      (my-home-flatpak-extension
+       (remotes (concatenate (map my-home-flatpak-extension-remotes extensions)))
+       (flatpaks (concatenate (map my-home-flatpak-extension-flatpaks extensions))))))
+
+   (extend
+    (lambda (config extension)
+      (my-home-flatpak-configuration
+       (inherit config)
+       
+       (remotes (append (my-home-flatpak-extension-remotes extension)
+                        (my-home-flatpak-configuration-remotes config)))
+       
+       (flatpaks (append (my-home-flatpak-extension-flatpaks extension)
+                         (my-home-flatpak-configuration-flatpaks config))))))))
 (export my-home-flatpak-service-type)
 
 (define* (make-flatpakexec-constructor flatpak-id #:key command #:allow-other-keys #:rest args)
