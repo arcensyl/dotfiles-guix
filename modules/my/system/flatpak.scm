@@ -256,7 +256,7 @@
                          (my-home-flatpak-configuration-flatpaks config))))))))
 (export my-home-flatpak-service-type)
 
-(define* (make-flatpakexec-constructor flatpak-id #:key command #:allow-other-keys #:rest args)
+(define* (make-flatpakexec-constructor flatpak-with-args #:key command #:allow-other-keys #:rest constructor-args)
   #~(make-forkexec-constructor
      ;; We don't have easy access to the right package, so we search for Flatpak in PATH.
      (list "/usr/bin/env"
@@ -265,8 +265,9 @@
            #$@(if command
                   (list (string-append "--command=\"" command "\""))
                   '())
-           #$flatpak-id
-           #$@args)))
+           #$(car flatpak-with-args)
+           #$@(cdr flatpak-with-args))
+     #$@constructor-args))
 (export make-flatpakexec-constructor)
 
 (define flatpak-queue '())
