@@ -227,6 +227,19 @@
                         my-home-flatpak-activation)))))
 (export my-home-flatpak-service-type)
 
+(define* (make-flatpakexec-constructor flatpak-id #:key command #:allow-other-keys #:rest args)
+  #~(make-forkexec-constructor
+     ;; We don't have easy access to the right package, so we search for Flatpak in PATH.
+     (list "/usr/bin/env"
+           "flatpak"
+           "run"
+           #$@(if command
+                  (list (string-append "--command=\"" command "\""))
+                  '())
+           #$flatpak-id
+           #$@args)))
+(export make-flatpakexec-constructor)
+
 (define flatpak-queue '())
 (define flatpak-remote-queue (make-hash-table))
 
@@ -243,8 +256,15 @@
 (define-public (use-flatpak-remote remote address)
   (hash-set! flatpak-remote-queue remote address))
 
-(define-public (provide-flatpak-alias alias flatpak-id)
-  (provide-shell-alias alias (string-append "flatpak run " flatpak-id)))
+(define* (provide-flatpak-alias alias flatpak-id #:optional command)
+  (if command
+      (provide-shell-alias alias (string-append "flatpak run --command=\""
+                                                command
+                                                "\" "
+                                                flatpak-id))
+      (provide-shell-alias alias (string-append "flatpak run "
+                                                flatpak-id))))
+(export provide-flatpak-alias)
 
 (define-unit ((system flatpak))
   (use-flatpaks "com.github.tchx84.Flatseal")
