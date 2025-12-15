@@ -49,13 +49,15 @@
 
 (define (home-mpd-shepherd-service config)
   (shepherd-service
-   (documentation "Music Player Daemon (MPD)")
+   (documentation "Run Music Player Daemon (MPD) under the current user.")
    (provision '(mpd))
+   
    (start #~(make-forkexec-constructor
              (list #$(file-append (home-mpd-configuration-package config)
                                 "/bin/mpd")
                    "--no-daemon")
              #:log-file (string-append (getenv "XDG_DATA_HOME") "/mpd/mpd.log")))
+   
    (stop #~(make-kill-destructor))))
 
 (define (simple-mpd-output->string output)
