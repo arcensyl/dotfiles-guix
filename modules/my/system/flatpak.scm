@@ -14,33 +14,33 @@
 (define %default-flatpak-remote-name "flathub")
 (define %default-flatpak-remotes '(("flathub" . "https://flathub.org/repo/flathub.flatpakrepo")))
 
-(define-record-type* <my-home-flatpak-configuration>
-  my-home-flatpak-configuration make-my-home-flatpak-configuration
-  my-home-flatpak-configuration?
+(define-record-type* <home-flatpak-configuration>
+  home-flatpak-configuration make-home-flatpak-configuration
+  home-flatpak-configuration?
 
-  (package my-home-flatpak-configuration-package
+  (package home-flatpak-configuration-package
                    (default (specification->package "flatpak")))
   
-  (remotes my-home-flatpak-configuration-remotes
+  (remotes home-flatpak-configuration-remotes
            (default %default-flatpak-remotes))
   
-  (flatpaks my-home-flatpak-configuration-flatpaks
+  (flatpaks home-flatpak-configuration-flatpaks
             (default '()))
 
-  (preserve? my-home-flatpak-configuration-preserve?
+  (preserve? home-flatpak-configuration-preserve?
              (default #f)))
-(export my-home-flatpak-configuration)
+(export home-flatpak-configuration)
 
-(define-record-type* <my-home-flatpak-extension>
-  my-home-flatpak-extension make-my-home-flatpak-extension
-  my-home-flatpak-extension?
+(define-record-type* <home-flatpak-extension>
+  home-flatpak-extension make-home-flatpak-extension
+  home-flatpak-extension?
 
-  (remotes my-home-flatpak-extension-remotes
+  (remotes home-flatpak-extension-remotes
            (default '()))
 
-  (flatpaks my-home-flatpak-extension-flatpaks
+  (flatpaks home-flatpak-extension-flatpaks
             (default '())))
-(export my-home-flatpak-extension)
+(export home-flatpak-extension)
 
 (define-record-type* <flatpak>
   flatpak make-flatpak
@@ -63,7 +63,7 @@
 ;;   (map
 ;;    (lambda (pkg)
 ;;      (cons (flatpak-id pkg) (flatpak-source pkg)))
-;;    (my-home-flatpak-configuration-flatpaks config)))
+;;    (home-flatpak-configuration-flatpaks config)))
 
 (define (new-flatpak-alist config)
   (map
@@ -74,15 +74,15 @@
        (cons 'source (flatpak-source pkg))
        (cons 'arch (flatpak-arch pkg))
        (cons 'branch (flatpak-branch pkg)))))
-   (my-home-flatpak-configuration-flatpaks config)))
+   (home-flatpak-configuration-flatpaks config)))
 
-(define (my-home-flatpak-activation config)
+(define (home-flatpak-activation config)
   #~(begin
       (use-modules (ice-9 popen)
                    (ice-9 textual-ports)
                    (srfi srfi-1))
 
-      (define flatpak-bin #$(file-append (my-home-flatpak-configuration-package config)
+      (define flatpak-bin #$(file-append (home-flatpak-configuration-package config)
                                          "/bin/flatpak"))
 
       ;; Needed for Flatpak to handle SSL/TLS encryption.
@@ -162,12 +162,12 @@
       
       ;; The actual Flatpak management code begins here.
       
-      (let ((preserve? #$(my-home-flatpak-configuration-preserve? config))
+      (let ((preserve? #$(home-flatpak-configuration-preserve? config))
             (prev-flatpaks (list->hash-set (system-flatpaks)))
             (prev-flatpak-apps (list->hash-set (system-flatpak-apps)))
             (new-flatpaks (alist->hash-map '#$(new-flatpak-alist config)))
             (prev-remotes (system-flatpak-remotes))
-            (new-remotes (alist->hash-map '#$(my-home-flatpak-configuration-remotes config))))
+            (new-remotes (alist->hash-map '#$(home-flatpak-configuration-remotes config))))
         (format #t "Adding any new Flatpak remotes...~%")
         (hash-for-each
          (lambda (name link)
@@ -215,19 +215,19 @@
                                                       remote)))
            prev-remotes)))))
 
-(define my-home-flatpak-service-type
+(define home-flatpak-service-type
   (service-type
-   (name 'my-home-flatpak)
+   (name 'home-flatpak)
    (description "Home service for managing Flatpak remotes and applications.")
 
-   (default-value (my-home-flatpak-configuration))
+   (default-value (home-flatpak-configuration))
    
    (extensions
     (list
      (service-extension home-profile-service-type
                         (lambda (config)
                           (list
-                           (my-home-flatpak-configuration-package config))))
+                           (home-flatpak-configuration-package config))))
 
      (service-extension home-environment-variables-service-type
                         (lambda (_)
@@ -236,25 +236,25 @@
                                  "/var/lib/flatpak/exports/share:$HOME/.local/share/flatpak/exports/share:$XDG_DATA_DIRS"))))
      
      (service-extension home-activation-service-type
-                        my-home-flatpak-activation)))
+                        home-flatpak-activation)))
 
    (compose
     (lambda (extensions)
-      (my-home-flatpak-extension
-       (remotes (concatenate (map my-home-flatpak-extension-remotes extensions)))
-       (flatpaks (concatenate (map my-home-flatpak-extension-flatpaks extensions))))))
+      (home-flatpak-extension
+       (remotes (concatenate (map home-flatpak-extension-remotes extensions)))
+       (flatpaks (concatenate (map home-flatpak-extension-flatpaks extensions))))))
 
    (extend
     (lambda (config extension)
-      (my-home-flatpak-configuration
+      (home-flatpak-configuration
        (inherit config)
        
-       (remotes (append (my-home-flatpak-extension-remotes extension)
-                        (my-home-flatpak-configuration-remotes config)))
+       (remotes (append (home-flatpak-extension-remotes extension)
+                        (home-flatpak-configuration-remotes config)))
        
-       (flatpaks (append (my-home-flatpak-extension-flatpaks extension)
-                         (my-home-flatpak-configuration-flatpaks config))))))))
-(export my-home-flatpak-service-type)
+       (flatpaks (append (home-flatpak-extension-flatpaks extension)
+                         (home-flatpak-configuration-flatpaks config))))))))
+(export home-flatpak-service-type)
 
 (define* (make-flatpakexec-constructor flatpak-with-args #:key command #:allow-other-keys #:rest constructor-args)
   #~(make-forkexec-constructor
@@ -302,8 +302,8 @@
   
   (eval-after-units
    (use-home-service
-    (service my-home-flatpak-service-type
-             (my-home-flatpak-configuration
+    (service home-flatpak-service-type
+             (home-flatpak-configuration
               (remotes (append (hash-map->alist flatpak-remote-queue)
                                %default-flatpak-remotes))
               (flatpaks flatpak-queue))))))

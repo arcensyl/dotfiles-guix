@@ -17,7 +17,7 @@
 
 ;; TODO: Investigate allowing Fcitx to be configured with my home service.
 
-(define my-home-fcitx-shepherd-service
+(define home-fcitx-shepherd-service
   (shepherd-service
    (documentation "Run Fcitx, an input method framework.")
    (provision '(fcitx))
@@ -36,9 +36,9 @@
    (stop #~(make-kill-destructor))))
 
 
-(define my-home-fcitx-service-type
+(define home-fcitx-service-type
   (service-type
-   (name 'my-home-fcitx)
+   (name 'home-fcitx)
    (description "Home service for running the Fcitx input method framework.")
 
    (default-value '())
@@ -65,9 +65,9 @@
 
      (service-extension home-shepherd-service-type
                         (lambda (_)
-                          (list my-home-fcitx-shepherd-service)))))))
-(export my-home-fcitx-service-type)
+                          (list home-fcitx-shepherd-service)))))))
+(export home-fcitx-service-type)
 
 (define-unit ((system lang input))
   (use-home-service
-   (service my-home-fcitx-service-type)))
+   (service home-fcitx-service-type)))

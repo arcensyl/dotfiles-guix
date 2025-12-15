@@ -12,47 +12,47 @@
   #:use-module (my utils misc)
   #:use-module (my system audio))
 
-(define-record-type* <my-home-mpd-configuration>
-  my-home-mpd-configuration make-my-home-mpd-configuration
-  my-home-mpd-configuration?
+(define-record-type* <home-mpd-configuration>
+  home-mpd-configuration make-home-mpd-configuration
+  home-mpd-configuration?
 
-  (package my-home-mpd-configuration-package
+  (package home-mpd-configuration-package
            (default mpd))
   
-  (port my-home-mpd-configuration-port
+  (port home-mpd-configuration-port
         (default 6600))
 
-  (outputs my-home-mpd-configuration-outputs
+  (outputs home-mpd-configuration-outputs
            (default '()))
   
-  (music-directory my-home-mpd-configuration-music-directory
+  (music-directory home-mpd-configuration-music-directory
                    (default "~/Music"))
 
-  (playlist-directory my-home-mpd-configuration-playlist-directory
+  (playlist-directory home-mpd-configuration-playlist-directory
                       (default "~/Music/Playlists"))
   
-  (database-file my-home-mpd-configuration-database-file
+  (database-file home-mpd-configuration-database-file
                  (default "~/.local/share/mpd/database"))
 
-  (state-file my-home-mpd-configuration-state-file
+  (state-file home-mpd-configuration-state-file
               (default "~/.local/share/mpd/state"))
 
-  (sticker-file my-home-mpd-configuration-sticker-file
+  (sticker-file home-mpd-configuration-sticker-file
                 (default "~/.local/share/mpd/sticker.sql"))
 
-  (follow-symlinks? my-home-mpd-configuration-follow-symlinks?
+  (follow-symlinks? home-mpd-configuration-follow-symlinks?
                     (default #t))
 
-  (auto-update? my-home-mpd-configuration-auto-update?
+  (auto-update? home-mpd-configuration-auto-update?
                 (default #f)))
-(export my-home-mpd-configuration)
+(export home-mpd-configuration)
 
-(define (my-home-mpd-shepherd-service config)
+(define (home-mpd-shepherd-service config)
   (shepherd-service
    (documentation "Music Player Daemon (MPD)")
    (provision '(mpd))
    (start #~(make-forkexec-constructor
-             (list #$(file-append (my-home-mpd-configuration-package config)
+             (list #$(file-append (home-mpd-configuration-package config)
                                 "/bin/mpd")
                    "--no-daemon")
              #:log-file (string-append (getenv "XDG_DATA_HOME") "/mpd/mpd.log")))
@@ -65,7 +65,7 @@
 
 (define write-home-mpd-configuration
   (match-lambda
-    (($ <my-home-mpd-configuration>
+    (($ <home-mpd-configuration>
         _ port outputs music-directory playlist-directory
         database-file state-file sticker-file
         follow-symlinks? auto-update?)
@@ -82,29 +82,29 @@
                       "auto_update \"" (boolean->yes-or-no auto-update?) "\"\n\n"
                       (string-join (map simple-mpd-output->string outputs) "\n")))))
 
-(define my-home-mpd-service-type
+(define home-mpd-service-type
   (service-type
-   (name 'my-home-mpd)
+   (name 'home-mpd)
    (description "Home service to run Music Player Daemon (MPD) as the current user.")
 
-   (default-value (my-home-mpd-configuration))
+   (default-value (home-mpd-configuration))
    
    (extensions
     (list
      (service-extension home-profile-service-type
                         (lambda (config)
                           (list
-                           (my-home-mpd-configuration-package config))))
+                           (home-mpd-configuration-package config))))
 
      (service-extension home-shepherd-service-type
                         (lambda (config)
                           (list
-                           (my-home-mpd-shepherd-service config))))
+                           (home-mpd-shepherd-service config))))
      
      (service-extension home-xdg-configuration-files-service-type
                         (lambda (config)
                           `(("mpd/mpd.conf" ,(write-home-mpd-configuration config)))))))))
-(export my-home-mpd-service-type)
+(export home-mpd-service-type)
 
 (define-unit ((suites media))
   (use-home-packages
@@ -119,8 +119,8 @@
    "mpv")
 
   (use-home-service
-   (service my-home-mpd-service-type
-            (my-home-mpd-configuration
+   (service home-mpd-service-type
+            (home-mpd-configuration
              (outputs
               (list
                (mpd-output (name "Pipewire") (type "pipewire"))))
