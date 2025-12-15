@@ -54,7 +54,7 @@
 
      (service-extension my-home-flatpak-service-type
                         (lambda (_)
-                          (my-home-flatpak-extension
+                          (home-flatpak-extension
                            (flatpaks (list (flatpak (id "org.fcitx.Fcitx5")))))))
      
      (service-extension home-environment-variables-service-type
