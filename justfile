@@ -21,6 +21,13 @@ alias up := update
     ln -sf ~/.dotfiles/guix/channels.scm ~/.config/guix/channels.scm
     ln -sf ~/.dotfiles/live/* ~/.config/
     
+    # HACK: We need to symlink fonts installed by Guix Home so Flatpaks can find them.
+    # Flatpaks should also be given read-only access to '/gnu/store'.
+    # Yes, I know this is pretty ugly...
+    mkdir -p ~/.local/share/fonts
+    ln -sf ~/.guix-home/profile/share/fonts ~/.local/share/fonts/guix
+    ln -s /home/arc/.guix-home/profile/share/fonts/truetype .fonts
+    
     @# Generating host-specific configuration...
     mkdir -p ./hosts/'{{host}}'
     # TODO: Copy 'config.scm' from default host.
