@@ -52,7 +52,7 @@
                                 fcitx5-qt
                                 fcitx5-configtool)))
 
-     (service-extension my-home-flatpak-service-type
+     (service-extension home-flatpak-service-type
                         (lambda (_)
                           (home-flatpak-extension
                            (flatpaks (list (flatpak (id "org.fcitx.Fcitx5")))))))
