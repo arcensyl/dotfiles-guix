@@ -1,16 +1,16 @@
 #!/bin/sh
 
-if [[ -z "$1" ]]; then
-    echo "Error: Package not specified!"
+# Build the package, saving its path that's inside '/gnu/store/'.
+store_path="$(guix build $@)"
+
+if [[ -z "$store_path" ]]; then
+    echo "Error: Package failed to build, or it has no outputs!" >&2
     exit 1
 fi
-
-# Build the package, saving its path that's inside '/gnu/store/'.
-store_path="$(guix build "$1")"
 
 # FIXME: If the built package has multiple store paths, the symlink will be invalid.
 # This is because my script assumes the build command will only return one path.
 # Instead though, it can also return a list of paths seperated by newlines.
 
 # Create a symlink, in the current directory, that points to this package.
-ln -s "$store_path" "$1"
+ln -s "$store_path" "result"
