@@ -19,11 +19,13 @@
   #:use-module (gnu)
   #:use-module (my core)
   #:use-module (my utils units)
-  #:use-module (my system flatpak))
+  #:use-module (my system flatpak)
+  #:use-module (my packages gamescope))
 
 (define-unit ((suites gaming))
   (use-home-packages
    ;; Game-related Utilities
+   gamescope
    "protonup"
    "mangohud"
 
