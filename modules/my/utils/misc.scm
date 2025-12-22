@@ -69,3 +69,9 @@
 (define-public (hash-values table)
   (hash-map->list (lambda (_ val) val)
                   table))
+
+(define* (maybe-wrap-string base #:optional prefix affix)
+  (if (and base (not (equal? base "")))
+      (string-append (or prefix "") (or base "") (or affix ""))
+      ""))
+(export maybe-wrap-string)
