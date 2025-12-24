@@ -1,0 +1,58 @@
+#!/bin/sh
+# Copyright © 2025 Arcensyl <dev@arcensyl.me>
+#
+# This file is NOT part of GNU Guix.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This script runs a provided command, ensuring it has access to environment variables set by Hyprland.
+# This is useful for things like Shepherd services, which are ran within a sandboxed environment.
+
+# TODO: When Hyprland can be configured from Guix, ensure it creates the signature file as expected.
+
+sig_file="${XDG_RUNTIME_DIR:-/tmp}/hyprland_sig"
+max_file_checks=30
+
+if [[ -z "$1" ]]; then
+    echo "Error: Program not specified"
+    exit 1
+fi
+
+if ! pgrep -x Hyprland > /dev/null; then
+    echo "Error: No Hyprland process found"
+    exit 2
+fi
+
+# If the Hyprland signature file doesn't exist yet, wait until it does.
+# This loop can time out if the file isn't created in time, causing the script to exit.
+check_count=1
+while [[ ! -f "$sig_file" ]]; do
+    if [[ $check_count -eq $max_file_checks ]]; then
+        echo "Error: Timed out waiting for the Hyprland signature file to be created"
+        exit 3
+    fi
+
+    sleep 1
+    echo "Waited for $check_count second\(s\) on the Hyprland signature file"
+    
+    ((check_count++))
+done
+
+# Get the instance signature of the current Hyprland instance.
+# When Hyprland starts, it should cache the signature in this file.
+export HYPRLAND_INSTANCE_SIGNATURE=$(cat "$sig_file")
+
+# Run the provided command with all arguments.
+# This replaces the current process.
+exec $@

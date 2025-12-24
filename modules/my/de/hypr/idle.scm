@@ -127,7 +127,8 @@
    (requirement '(graphical-session))
    
    (start #~(make-forkexec-constructor
-             (list #$(file-append (home-hypridle-configuration-package config)
+             (list #$(string-append master-home-directory "/.dotfiles/guix/scripts/run-with-hypr-env")
+                   #$(file-append (home-hypridle-configuration-package config)
                                   "/bin/hypridle"))
              #:environment-variables (cons* (string-append "WAYLAND_DISPLAY="
                                                            #$(or (getenv "WAYLAND_DISPLAY")
