@@ -1,0 +1,187 @@
+(define-module (my utils keys)
+  #:use-module (ice-9 match)
+  #:use-module (srfi srfi-14)
+  #:use-module (gnu)
+  #:use-module (guix records)
+  #:use-module (my utils misc))
+
+(define-record-type* <keybind>
+  keybind make-keybind
+  keybind?
+  
+  (key keybind-key)
+
+  (modifiers keybind-modifiers
+             (default '()))
+
+  (variant keybind-variant
+           (default #f)))
+(export keybind)
+
+(define (parse-key key)
+  (when (= (string-length (string-trim-both key)) 0)
+    (error "Key cannot be empty"))
+  
+  (unless (= (string-length key) 1)
+    (error (format #f "Key '~a' should only contain one character" key)))
+  
+  key)
+
+(define (get-key-variant key)
+  (cond ((string-prefix? "<fn:" key)
+         (let* ((key-no-prefix (string-drop key 4))
+                (raw-code (string-drop-right key-no-prefix 1))
+                (code (string->number raw-code)))
+           (if code
+               code
+               (error "Function key arugment must be an integer"))))
+        (else #f)))
+
+(define (parse-special-key key)
+  (unless (string-suffix? ">" key)
+    (error (format #f "Key '~a' lacks a closing delimiter" key)))
+  
+  (match key
+    ("<dash>" "-")
+    ("<left_angle>" "<")
+    ("<right_angle>" ">")
+    
+    ("<super>" 'super)
+    ((or "<meta>" "<alt>") 'meta)
+    ("<shift>" 'shift)
+    ((or "<control>" "<ctrl>") 'control)
+    
+    ((or "<escape>" "<esc>") 'escape)
+    ((or "<return>" "<ret>" "<enter>") 'return)
+    ("<space>" 'space)
+    ("<tab>" 'tab)
+    
+    ((or "<insert>" "<ins>") 'insert)
+    ((or "<delete>" "<del>") 'delete)
+    ("<home>" 'home)
+    ("<end>" 'end)
+    ("<print>" 'print)
+    ("<page_up>" 'page-up)
+    ("<page_down>" 'page-down)
+
+    ("<up>" 'arrow-up)
+    ("<down>" 'arrow-down)
+    ("<left>" 'arrow-left)
+    ("<right>" 'arrow-right)
+
+    ((? (lambda (s) (string-prefix? "<fn:" s)) _) 'function)
+    (other (error (format #f "Key '~a' is invalid" other)))))
+
+(define (parse-modifier mod)
+  (match (string-upcase mod)
+    ("U" 'super)
+    ("M" 'meta)
+    ("C" 'control)
+    ("S" 'shift)
+
+    (other (error (format #f "Key '~a' is an invalid modifier" other)))))
+
+(define-public (specification->keybind spec)
+  (let* ((parts (reverse (string-split spec #\-)))
+         (key (string-downcase (car parts)))
+         (modifiers (reverse (cdr parts))))
+    (keybind
+     (key (if (string-prefix? "<" key)
+              (parse-special-key key)
+              (parse-key key)))
+     
+     (modifiers (map parse-modifier modifiers))
+
+     (variant (get-key-variant key)))))
+
+(define-syntax kb
+  (lambda (x)
+    (syntax-case x ()
+      ((kb spec)
+       (unless (string? (syntax->datum #'spec))
+         (error "SPEC, passed to the 'kb' macro, must be a string literal"))
+
+       (let* ((spec-str (syntax->datum #'spec))
+              (parts (reverse (string-split spec-str #\-)))
+              (key (string-downcase (car parts)))
+              (modifiers (reverse (cdr parts))))
+         #`(keybind
+          (key #,(if (string-prefix? "<" key)
+                   (let ((parsed (parse-special-key key)))
+                     (if (symbol? parsed)
+                         (datum->syntax x `',parsed)
+                         (datum->syntax x parsed)))
+                   (datum->syntax x (parse-key key))))
+          (modifiers '(#,@(map
+                           (lambda (m) (datum->syntax x (parse-modifier m)))
+                           modifiers)))
+
+          (variant #,(get-key-variant key))))))))
+(export kb)
+
+(define (key->xbd key)
+  (match key
+    ("!" "exclam")
+    ("#" "numbersign")
+    ("$" "dollar")
+    ("%" "percent")
+    ("&" "ampersand")
+    ("'" "apostrophe")
+    ("\"" "quotedbl")
+    ("," "comma")
+    ("." "period")
+    ("?" "question")
+    ("_" "underscore")
+    ("@" "at")
+    ("`" "asciitilde")
+    ("~" "grave")
+    ("*" "asterisk")
+    ("+" "plus")
+    ("-" "minus")
+    ("=" "equal")
+    ("<" "less")
+    (">" "greater")
+    (";" "semicolon")
+    (":" "colon")
+    ("/" "slash")
+    ("\\" "backslash")
+    ("|" "bar")
+    ("(" "parenleft")
+    (")" "parenright")
+    ("[" "bracketleft")
+    ("]" "bracketright")
+    ("{" "braceleft")
+    ("}" "braceright")
+
+    ('super "super")
+    ('meta "alt")
+    ('shift "shift")
+    ('control "ctrl")
+    ('escape "escape")
+    ('space "space")
+    ('tab "tab")
+    ('insert "insert")
+    ('delete "delete")
+    ('home "home")
+    ('end "end")
+    ('print "print")
+    ('page-up "prior")
+    ('page-down "next")
+    ('arrow-up "up")
+    ('arrow-down "down")
+    ('arrow-left "left")
+    ('arrow-right "right")
+
+    ('function "f")
+    (other other)))
+
+;; TODO: Move this to the same file defining a Hyprland service.
+(define keybind->hypr
+  (match-lambda
+    (($ <keybind> key modifiers variant)
+     (string-upcase
+      (string-append
+       (string-join (map key->xbd modifiers))
+       ", "
+       (key->xbd key)
+       (if variant (number->string variant) ""))))))
