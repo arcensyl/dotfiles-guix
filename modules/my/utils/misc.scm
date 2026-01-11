@@ -72,6 +72,12 @@
 
 (define* (maybe-wrap-string base #:optional prefix affix)
   (if (and base (not (equal? base "")))
-      (string-append (or prefix "") (or base "") (or affix ""))
+      (string-append (or prefix "") base (or affix ""))
       ""))
 (export maybe-wrap-string)
+
+(define-syntax call-or-value
+  (syntax-rules ()
+    ((_ obj)
+     (if (procedure? obj) (obj) obj))))
+(export call-or-value)
