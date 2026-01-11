@@ -10,7 +10,7 @@
 ;;; Copyright © 2022 Demis Balbach <db@minikn.xyz>
 ;;; Copyright © 2024-2025 aurtzy <aurtzy@gmail.com>
 ;;; Copyright © 2024 dan <i@dan.games>
-;;; Copyright © 2025 Arcensyl <dev@arcensyl.me>
+;;; Copyright © 2025-2026 Arcensyl <dev@arcensyl.me>
 ;;;
 ;;; This file is NOT part of GNU Guix.
 ;;;

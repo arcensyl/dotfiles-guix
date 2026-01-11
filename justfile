@@ -1,4 +1,4 @@
-# Copyright © 2025 Arcensyl <dev@arcensyl.me>
+# Copyright © 2025-2026 Arcensyl <dev@arcensyl.me>
 #
 # This file is NOT part of GNU Guix.
 #
