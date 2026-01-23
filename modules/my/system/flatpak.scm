@@ -76,22 +76,12 @@
           (default "")))
 (export flatpak)
 
-;; (define (new-flatpak-alist config)
-;;   (map
-;;    (lambda (pkg)
-;;      (cons (flatpak-id pkg) (flatpak-source pkg)))
-;;    (home-flatpak-configuration-flatpaks config)))
-
-(define (new-flatpak-alist config)
-  (map
-   (lambda (pkg)
-     (cons
-      (flatpak-id pkg)
-      (list
-       (cons 'source (flatpak-source pkg))
-       (cons 'arch (flatpak-arch pkg))
-       (cons 'branch (flatpak-branch pkg)))))
-   (home-flatpak-configuration-flatpaks config)))
+(define (flatpak->ir pkg)
+  (cons (flatpak-id pkg)
+        (list
+         (cons 'source (flatpak-source pkg))
+         (cons 'arch (flatpak-arch pkg))
+         (cons 'branch (flatpak-branch pkg)))))
 
 (define (home-flatpak-activation config)
   #~(begin
@@ -182,7 +172,7 @@
       (let ((preserve? #$(home-flatpak-configuration-preserve? config))
             (prev-flatpaks (list->hash-set (system-flatpaks)))
             (prev-flatpak-apps (list->hash-set (system-flatpak-apps)))
-            (new-flatpaks (alist->hash-map '#$(new-flatpak-alist config)))
+            (new-flatpaks (alist->hash-map '#$(map flatpak->ir (home-flatpak-configuration-flatpaks config))))
             (prev-remotes (system-flatpak-remotes))
             (new-remotes (alist->hash-map '#$(home-flatpak-configuration-remotes config))))
         (format #t "Adding any new Flatpak remotes...~%")
@@ -199,11 +189,13 @@
         (hash-for-each
          (lambda (app data)
            (unless (hash-get-handle prev-flatpaks app)
-             (run-flatpak-command "install"
-                                  "--user"
-                                  "--noninteractive"
-                                  (assq-ref data 'source)
-                                  (simple-flatpak->ref app data))))
+             (let ((source (assq-ref data 'source)))
+               (when source
+                 (run-flatpak-command "install"
+                                      "--user"
+                                      "--noninteractive"
+                                      source
+                                      (simple-flatpak->ref app data))))))
          new-flatpaks)
  
         (unless preserve?
