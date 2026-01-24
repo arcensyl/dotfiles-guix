@@ -171,7 +171,8 @@
   (provide-shell-alias "gx" "guix")
   
   (use-packages
-   ;; Libraries
+   ;; Libraries and Toolchains
+   "gcc-toolchain"
    "ncurses"
 
    ;; CLI Essentials
