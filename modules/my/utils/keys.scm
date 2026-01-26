@@ -22,20 +22,34 @@
   #:use-module (guix records)
   #:use-module (my utils misc))
 
+;; This record represents a single keybind, consisting of a base key and several modifiers.
+;; This is the core part of my target-agnostic keybinding API.
 (define-record-type* <keybind>
   keybind make-keybind
   keybind?
   
-  (key keybind-key)
+  (key keybind-key
+       (doc "The base key of this keybind.
+This is usually a string, but is a symbol for special keys like 'home' and 'end'."))
 
   (modifiers keybind-modifiers
-             (default '()))
+             (default '())
+             (doc "A list of modifier keys that must be held for this keybind to trigger.
+Each modifier key is represented by a symbol with that key's name, such as 'super'."))
 
   (variant keybind-variant
-           (default #f)))
+           (default #f)
+           (doc "An integer specifying the 'variant' of the base key.
+This is used for multiple keys that share the same symbol, such as function keys.
+This is usually unused, and it defaults to '#f'.")))
 (export keybind)
 
+;; TODO: Reconsider the logic of the 'parse-key' function.
+
 (define (parse-key key)
+  "Parse KEY, the base key in a keybind.
+This procedure is made for non-special keys directly represented in a keybind specification.
+This includes all alphanumeric characters, and all symbols besides dashes and angle brackets."
   (when (= (string-length (string-trim-both key)) 0)
     (error "Key cannot be empty"))
   
@@ -45,6 +59,8 @@
   key)
 
 (define (get-key-variant key)
+  "Return the variant specified by KEY.
+Currently, only function keys have variants."
   (cond ((string-prefix? "<fn:" key)
          (let* ((key-no-prefix (string-drop key 4))
                 (raw-code (string-drop-right key-no-prefix 1))
@@ -55,6 +71,10 @@
         (else #f)))
 
 (define (parse-special-key key)
+  "Parse KEY, the base key in a keybind.
+This is like 'parse-key', but for special keys that can't be directly represented in a keybind specification.
+KEY should be a string containing the key's name surrounded by angle brackets.
+Function keys should be specified like '<fn:N>', where N is the number of a specific function key."
   (unless (string-suffix? ">" key)
     (error (format #f "Key '~a' lacks a closing delimiter" key)))
   
@@ -90,6 +110,7 @@
     (other (error (format #f "Key '~a' is invalid" other)))))
 
 (define (parse-modifier mod)
+  "Parse MOD, a single character specifying a modifier key."
   (match (string-upcase mod)
     ("U" 'super)
     ("M" 'meta)
@@ -99,6 +120,10 @@
     (other (error (format #f "Key '~a' is an invalid modifier" other)))))
 
 (define-public (specification->keybind spec)
+  "Parse SPEC into a keybind record.
+A keybind specification follows an Emacs-like syntax, without support for chords.
+For example, 'C-c' is the specification for the base key 'c' with the control modifier key.
+Note that 'U' is used for the super modifier key, and 'M' is for the alt modifier key."
   (let* ((parts (reverse (string-split spec #\-)))
          (key (string-downcase (car parts)))
          (modifiers (reverse (cdr parts))))
@@ -111,6 +136,9 @@
 
      (variant (get-key-variant key)))))
 
+;; This macro parses SPEC into a keybind record.
+;; This is basically a compile-time version of the 'specification->keybind' procedure.
+;; To understand the specification format, please look at the docs of that procedure.
 (define-syntax kb
   (lambda (x)
     (syntax-case x ()
@@ -137,6 +165,7 @@
 (export kb)
 
 (define (key->xbd key)
+  "Convert KEY to the name used for it in the XKB specification."
   (match key
     ("!" "exclam")
     ("#" "numbersign")
@@ -193,12 +222,13 @@
     (other other)))
 
 ;; TODO: Move this to the same file defining a Hyprland service.
-(define keybind->hypr
-  (match-lambda
-    (($ <keybind> key modifiers variant)
-     (string-upcase
-      (string-append
-       (string-join (map key->xbd modifiers))
-       ", "
-       (key->xbd key)
-       (if variant (number->string variant) ""))))))
+(define-matcher (keybind->hypr bind)
+  "Convert BIND to a string following Hyprlang's syntax for keybinds."
+  (($ <keybind> key modifiers variant)
+   (string-upcase
+    (string-append
+     (string-join (map key->xbd modifiers))
+     ", "
+     (key->xbd key)
+     (if variant (number->string variant) "")))))
+(export keybind->hypr)
