@@ -16,6 +16,7 @@
 ;;; with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (my utils misc)
+  #:use-module (srfi srfi-1)
   #:use-module (ice-9 match))
 
 ;; This macro allows you to define a named procedure that matches on its first argument.
@@ -48,6 +49,26 @@ Otherwise, return '#f'."
   (if (list? var)
       (all-symbols? var)
       #f))
+
+(define-public (flatten lst)
+  "Flatten LST to remove all nesting.
+If LST has too much nesting, this procedure could cause a stack overflow."
+  (fold-right (lambda (item acc)
+                (if (list? item)
+                    (append (flatten item) acc)
+                    (cons item acc)))
+              '()
+              lst))
+
+(define-public (flatten-map proc lst)
+  "Flatten LST, and map over each value with PROC.
+If LST has too much nesting, this procedure could cause a stack overflow."
+  (fold-right (lambda (item acc)
+                (if (list? item)
+                    (append (flatten-map proc item) acc)
+                    (cons (proc item) acc)))
+              '()
+              lst))
 
 (define-syntax-rule (boolean->true-or-false bool)
   "Return \"true\" or \"false\" depending on the value of BOOL."
