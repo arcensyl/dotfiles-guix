@@ -16,10 +16,13 @@
 ;;; with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (my packages misc)
+  #:use-module (gnu packages)
   #:use-module (gnu packages golang-xyz)
   #:use-module (guix packages)
   #:use-module (guix licenses)
+  #:use-module (guix gexp)
   #:use-module (guix git-download)
+  #:use-module (guix build-system trivial)
   #:use-module (guix build-system go)
   #:use-module (my packages deps golang-xyz))
 
@@ -51,3 +54,34 @@
    (synopsis "Minecraft to Mineclonia texture pack converter")
    (description "Minecraft to Mineclonia texture pack converter")
    (license expat)))
+
+(define-public (make-java-wrapper tag java-package)
+  "Create a package that exposes JDK binaries under versioned names."
+  (package
+    (name (string-append "java" tag "-wrapper"))
+    (version (package-version java-package))
+    (source #f)
+    (build-system trivial-build-system)
+    (arguments
+     (list
+      #:modules '((guix build utils))
+      #:builder
+      #~(begin
+          (use-modules (guix build utils))
+          (let* ((out #$output)
+                 (bin-out (string-append out "/bin"))
+                 (jdk-bin (string-append #$java-package:jdk "/bin")))
+            (mkdir-p bin-out)
+            ;; Create symlinks or wrapper scripts for each binary
+            (for-each
+             (lambda (tool)
+               (let ((src  (string-append jdk-bin "/" tool))
+                     (dest (string-append bin-out "/"
+                                          tool #$tag)))
+                 (when (file-exists? src)
+                   (symlink src dest))))
+             '("java" "javac" "jar" "javadoc"))))))
+    (synopsis (string-append "Wrapper for version " (package-version java-package) " of "(package-name java-package)))
+    (description "Provides version-prefixed binaries for a specific OpenJDK.")
+    (license (package-license java-package))
+    (home-page (package-home-page java-package))))
