@@ -22,6 +22,8 @@ alias up := update
 @_default:
     just --list
 
+# TODO: Completely revamp installation process.
+
 # Prepare for and do an initial build of the system named HOST.
 [confirm("Are you sure you want to initialize this system with this configuration? (y/n):")]
 @init host:
@@ -30,6 +32,8 @@ alias up := update
     mkdir -p ~/.dotfiles/live
     mkdir -p ~/.util
     mkdir -p ~/.config/guix
+    sudo mkdir -p "/nix/var/nix/profiles/per-user/$USER"
+    sudo chown "$USER" "/nix/var/nix/profiles/per-user/$USER"
     
     @# Pulling down required resources from the internet... 
     curl -o gen/auth/nonguix.pub 'https://substitutes.nonguix.org/signing-key.pub'
@@ -50,23 +54,46 @@ alias up := update
     # TODO: Copy 'config.scm' from default host.
     ./scripts/generate-hardware-scm '{{host}}'
     
-    @# Building system for the first time...
+    @# Building system...
     GUIX_HOSTNAME='{{host}}' sudo -E guix system reconfigure main.scm
+    
+    @# Building Nix profile...
+    sleep 1 # Wait for Guix Home activation.
+    nix run 'path:gen/nix#profile.switch'
+    nix run 'path:gen/nix#profile.pin'
+    
     @# System initialized! Please reboot at your earliest convenience.
 
 # Rebuild this system to apply any configuration changes.
 @rebuild:
     @# Rebuilding system...
     sudo -E guix system reconfigure main.scm
+    
+    @# Rebuilding Nix profile...
+    sleep 1 # Wait for Guix Home activation.
+    nix run 'path:gen/nix#profile.switch'
+    nix run 'path:gen/nix#profile.pin'
+    
     @# System rebuilt.
 
 # Update this system by fetching any new package versions and doing a rebuild.
 @update:
-    @# Fetching the latest version of all packages...
+    @# Updating Guix channels...
     guix pull
     
+    @# Updating Nix flake inputs...
+    # Because Nix package pinning can't be reverted, we save the old lock file.
+    cp -f gen/nix/flake.lock gen/nix/flake.lock.old
+    nix flake update --flake gen/nix
+    
     @# Pull complete. Rebuilding system...
+    sleep 1 # Wait for Guix Home activation.
     sudo -E guix system reconfigure main.scm
+    
+    @# Rebuilding Nix profile...
+    nix run 'path:gen/nix#profile.switch'
+    sudo nix run 'path:gen/nix#profile.pin'
+    
     @# System updated. You should consider rebooting soon.
 
 # Test this configuration by doing a dry run of a system build.

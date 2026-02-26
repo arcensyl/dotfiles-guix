@@ -29,7 +29,9 @@
   #:use-module (guix)
   #:use-module (nongnu packages linux)
   #:use-module (my utils units)
-  #:use-module (my system shells))
+  #:use-module (my system shells)
+  #:use-module (my system nix)
+  #:use-module (my system flatpak))
 
 ;; Settings for this system.
 
@@ -129,7 +131,6 @@
                   (supplementary-groups '("wheel" "netdev" "audio" "video")))
                  %base-user-accounts))
 
-
    (services
     (append service-queue
             (modify-services %desktop-services
@@ -181,3 +182,6 @@
    ;; Config-related Tools
    "git"
    "just"))
+
+(hook-unit 'core '(system nix))
+(hook-unit 'core '(system flatpak))
