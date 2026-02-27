@@ -85,7 +85,7 @@
 
   outputs = { self, nixpkgs, flake-utils, flakey-profile, ... }@inputs:
     flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = import nixpkgs { inherit system; };
+      let pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
       in {
         packages.profile = flakey-profile.lib.mkProfile {
           inherit pkgs;
