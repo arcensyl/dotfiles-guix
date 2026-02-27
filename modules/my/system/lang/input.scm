@@ -24,13 +24,11 @@
   #:use-module (gnu home services shepherd)
   #:use-module (my core)
   #:use-module (my utils units)
-  #:use-module (my system flatpak))
+  #:use-module (my system nix))
 
 ;; HACK: This entire setup is cursed.
-;; Because I use Mozc for my Japanese IME, I need to use the Flatpak version of Fcitx.
-;; This surprisingly works fine, provided Fcitx's native packages are installed too.
-
-;; TODO: When I find or write a derivation for Mozc, update this to just use the native version of Fcitx.
+;; As I use Mozc for Japanese input, I use the Nix package for Fcitx5.
+;; This seems to work fine, though setting it up is a bit finicky.
 
 ;; TODO: Investigate allowing Fcitx to be configured with my home service.
 
@@ -41,17 +39,24 @@
    (requirement '(graphical-session))
    
    (start #~(make-forkexec-constructor
-             (list "/usr/bin/env"
-                   "flatpak"
-                   "run"
-                   "org.fcitx.Fcitx5")
+             (list (string-append (getenv "HOME") "/.nix-profile/bin/fcitx5"))
              #:environment-variables (cons* (string-append "WAYLAND_DISPLAY="
                                                           #$(or (getenv "WAYLAND_DISPLAY")
                                                                 "wayland-1"))
+                                            
+                                            (string-append "XDG_DATA_DIRS="
+                                                           (getenv "HOME")
+                                                           "/.nix-profile/share:"
+                                                           (or (getenv "XDG_DATA_DIRS") ""))
+                                            
+                                            (string-append "FCITX_ADDON_DIRS="
+                                                           (getenv "HOME")
+                                                           "/.nix-profile/lib/fcitx5:"
+                                                           (or (getenv "FCITX_ADDON_DIRS") ""))
+                                            
                                             (default-environment-variables))))
    
    (stop #~(make-kill-destructor))))
-
 
 (define home-fcitx-service-type
   (service-type
@@ -62,17 +67,11 @@
 
    (extensions
     (list
-     (service-extension home-profile-service-type
+     (service-extension home-flake-service-type
                         (lambda (_)
-                          (list fcitx5
-                                fcitx5-gtk
-                                fcitx5-qt
-                                fcitx5-configtool)))
-
-     (service-extension home-flatpak-service-type
-                        (lambda (_)
-                          (home-flatpak-extension
-                           (flatpaks (list (flatpak (id "org.fcitx.Fcitx5")))))))
+                          (list "fcitx5"
+                                "fcitx5-gtk"
+                                "kdePackages.fcitx5-configtool")))
      
      (service-extension home-environment-variables-service-type
                         (lambda (_)
