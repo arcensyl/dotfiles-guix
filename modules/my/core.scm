@@ -178,6 +178,7 @@
 
    ;; CLI Essentials
    "fastfetch"
+   "openssh"
 
    ;; Config-related Tools
    "git"
