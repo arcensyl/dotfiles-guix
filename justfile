@@ -60,7 +60,7 @@ alias up := update
     @# Building Nix profile...
     sleep 1 # Wait for Guix Home activation.
     nix run 'path:gen/nix#profile.switch'
-    nix run 'path:gen/nix#profile.pin'
+    #nix run 'path:gen/nix#profile.pin'
     
     @# System initialized! Please reboot at your earliest convenience.
 
@@ -72,7 +72,7 @@ alias up := update
     @# Rebuilding Nix profile...
     sleep 1 # Wait for Guix Home activation.
     nix run 'path:gen/nix#profile.switch'
-    nix run 'path:gen/nix#profile.pin'
+    #nix run 'path:gen/nix#profile.pin'
     
     @# System rebuilt.
 
@@ -84,7 +84,7 @@ alias up := update
     @# Updating Nix flake inputs...
     # Because Nix package pinning can't be reverted, we save the old lock file.
     cp -f gen/nix/flake.lock gen/nix/flake.lock.old
-    nix flake update --flake gen/nix
+    nix flake update --flake 'path:gen/nix'
     
     @# Pull complete. Rebuilding system...
     sleep 1 # Wait for Guix Home activation.
@@ -92,7 +92,9 @@ alias up := update
     
     @# Rebuilding Nix profile...
     nix run 'path:gen/nix#profile.switch'
-    sudo nix run 'path:gen/nix#profile.pin'
+    
+    # Package pinning doesn't currently work because the '/etc/nix' directory is read-only.
+    #sudo nix run 'path:gen/nix#profile.pin'
     
     @# System updated. You should consider rebooting soon.
 
