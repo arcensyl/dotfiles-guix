@@ -130,10 +130,6 @@
    ;; Media Manipulation
    "ffmpeg"
 
-   ;; Downloaders
-   "yt-dlp"
-   "ani-cli"
-
    ;; Playback
    "mpv")
 
