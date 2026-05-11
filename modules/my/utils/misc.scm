@@ -70,6 +70,11 @@ If LST has too much nesting, this procedure could cause a stack overflow."
               '()
               lst))
 
+(define-syntax-rule (push! lst elt)
+  "Modify LST by pushing ELT to the front of it."
+  (set! lst (cons elt lst)))
+(export push!)
+
 (define-syntax-rule (boolean->true-or-false bool)
   "Return \"true\" or \"false\" depending on the value of BOOL."
   (if bool "true" "false"))
