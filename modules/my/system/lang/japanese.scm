@@ -18,7 +18,7 @@
 (define-module (my system lang japanese)
   #:use-module (gnu)
   #:use-module (my core)
-  #:use-module (my utils units)
+  #:use-module (my utils features)
   #:use-module (my system nix)
   #:use-module (my system lang input)
   #:use-module (my system shells))
@@ -26,7 +26,9 @@
 ;; NOTE: To use Mozc, you will need to manually enable it in Fcitx's configuration.
 ;; If I add configuration support to my Fcitx service, I'll make this automatic.
 
-(define-unit ((system lang japanese))
+(define-feature japanese
+  (feat-require 'input-methods)
+  
   (use-nix-packages
    ;; Input Methods
    "ibus-engines.mozc"
@@ -37,5 +39,3 @@
 
   (provide-shell-alias "jaw" "jiten jmdict -w")
   (provide-shell-alias "jak" "jiten kanji -e"))
-
-(hook-unit '(system lang japanese) '(system lang input))

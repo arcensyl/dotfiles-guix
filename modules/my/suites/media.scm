@@ -25,7 +25,7 @@
   #:use-module (gnu home services shepherd)
   #:use-module (guix records)
   #:use-module (my core)
-  #:use-module (my utils units)
+  #:use-module (my utils features)
   #:use-module (my utils misc)
   #:use-module (my system audio))
 
@@ -125,7 +125,7 @@
                           `(("mpd/mpd.conf" ,(write-home-mpd-configuration config)))))))))
 (export home-mpd-service-type)
 
-(define-unit ((suites media))
+(define-feature media
   (use-home-packages
    ;; Media Manipulation
    "ffmpeg"
@@ -141,4 +141,3 @@
                (mpd-output (name "Pipewire") (type "pipewire"))))
              (auto-update? #t)))))
 
-(hook-unit '(suites media) '(system audio))

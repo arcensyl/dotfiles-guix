@@ -19,9 +19,9 @@
   #:use-module (gnu)
   #:use-module (gnu home services gnupg)
   #:use-module (my core)
-  #:use-module (my utils units))
+  #:use-module (my utils features))
 
-(define-unit ((suites secrets))
+(define-feature secrets
   (use-home-packages "password-store")
 
   (use-home-service

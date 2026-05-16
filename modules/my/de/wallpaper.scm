@@ -24,7 +24,6 @@
   #:use-module (gnu home services shepherd)
   #:use-module (my core)
   #:use-module (my theming)
-  #:use-module (my utils units)
   #:use-module (my system graphics))
 
 ;; TODO: Consider writing a custom package for AWWW.

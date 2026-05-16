@@ -23,7 +23,8 @@
   #:use-module (gnu home services)
   #:use-module (guix records)
   #:use-module (my core)
-  #:use-module (my utils units)
+  #:use-module (my utils features)
+  #:use-module (my utils defer)
   #:use-module (my utils misc))
 
 (define-record-type* <theme>
@@ -219,10 +220,10 @@
     (variables
      (lambda ()
        (let* ((cursor (theme-cursor (current-theme)))
-              (format (cursor-format cursor))
+              (fmt (cursor-format cursor))
               (name (cursor-name cursor))
               (size (cursor-size cursor)))
-         (match format
+         (match fmt
            ('xorg (list
                    (cons "XCURSOR_THEME" name)
                    (cons "XCURSOR_SIZE" (number->string size))))
@@ -231,7 +232,7 @@
                    (cons "HYPRCURSOR_THEME" name)
                    (cons "HYPRCURSOR_SIZE" (number->string size))))
            
-           (_ (error (format #f "Cursor format '~a' is invalid" format)))))))))
+           (_ (error (format #f "Cursor format '~a' is invalid" fmt)))))))))
 
 (define %default-theming-targets
   (list base-cursor-target))
@@ -288,9 +289,11 @@
 (define-public (use-theme theme)
   (set! used-theme theme))
 
-(define-unit (theming)
-  (unless used-theme
-    (error "You must provide a theme, with 'use-theme', to use the 'theming' unit"))
-
-  (use-home-service (service home-theming-service-type
-                             (home-theming-configuration (theme used-theme)))))
+(define-feature theming
+  (defer
+    (unless used-theme
+      (error "You must provide a theme, with 'use-theme', to use the 'theming' feature"))
+    
+    (use-home-service
+     (service home-theming-service-type
+              (home-theming-configuration (theme used-theme))))))

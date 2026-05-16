@@ -25,7 +25,7 @@
 
 (use-modules (ice-9 format)
              (my core)
-             (my utils units))
+             (my utils defer))
 
 (define host-config-file (string-append "./hosts/" system-name "/config.scm"))
 (define host-hardware-file (string-append "./hosts/" system-name "/hardware.scm"))
@@ -36,8 +36,9 @@
 (unless (file-exists? host-hardware-file)
   (error (format #f "No 'hardware.scm' file found for the host '~a'." system-name)))
 
-(load host-config-file)
-(load host-hardware-file)
+(with-deferred
+ (load host-config-file)
+ (load host-hardware-file))
 
-(apply-all-units)
+;; (apply-all-units)
 (make-operating-system)

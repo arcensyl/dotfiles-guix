@@ -24,7 +24,8 @@
   #:use-module (gnu home services shepherd)
   #:use-module (guix records)
   #:use-module (my core)
-  #:use-module (my utils units)
+  #:use-module (my utils features)
+  #:use-module (my utils defer)
   #:use-module (my utils misc))
 
 (define-record-type* <home-hypridle-configuration>
@@ -166,9 +167,9 @@
 (define-public (use-hypridle-listener listener)
   (set! listener-queue (cons listener listener-queue)))
 
-(define-unit ((de hypr idle))
-  (eval-after-units
-   (use-home-service
-    (service home-hypridle-service-type
-             (home-hypridle-configuration
-              (listeners listener-queue))))))
+(define-feature hypridle
+  (defer
+    (use-home-service
+     (service home-hypridle-service-type
+              (home-hypridle-configuration
+               (listeners listener-queue))))))

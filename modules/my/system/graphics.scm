@@ -20,7 +20,7 @@
   #:use-module (gnu services shepherd)
   #:use-module (gnu home services shepherd)
   #:use-module (my core)
-  #:use-module (my utils units))
+  #:use-module (my utils features))
 
 (define home-wayland-shepherd-service
   (shepherd-service
@@ -47,7 +47,9 @@
    (auto-start? #f)
    (one-shot? #t)))
 
-(define-unit ((system wayland))
+(define-feature-stub graphics)
+
+(define-feature wayland
   (use-home-packages
    ;; Wayland-specific Tools
    "wl-clipboard"
@@ -58,4 +60,6 @@
   (use-home-service
    (simple-service 'register-home-wayland-shepherd-service
                    home-shepherd-service-type
-                   (list home-wayland-shepherd-service))))
+                   (list home-wayland-shepherd-service)))
+
+  (feat-provide 'graphics))

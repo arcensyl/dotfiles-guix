@@ -20,10 +20,14 @@
   #:use-module (gnu home services desktop)
   #:use-module (gnu home services sound)
   #:use-module (my core)
-  #:use-module (my utils units))
+  #:use-module (my utils features))
 
-(define-unit ((system audio))
+(define-feature-stub audio)
+
+(define-feature pipewire
   (use-home-service (service home-dbus-service-type))
   (use-home-service (service home-pipewire-service-type))
 
-  (use-home-packages "wireplumber" "pulseaudio"))
+  (use-home-packages "wireplumber" "pulseaudio")
+
+  (feat-provide 'audio))

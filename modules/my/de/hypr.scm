@@ -24,7 +24,7 @@
   #:use-module (gnu home services shepherd)
   #:use-module (my core)
   #:use-module (my theming)
-  #:use-module (my utils units)
+  #:use-module (my utils features)
   #:use-module (my system graphics)
   #:use-module (my de wallpaper))
 
@@ -82,10 +82,8 @@ wallpaper {
                             (provision '(hyprpaper))
                             (file write-home-hyprpaper-configuration)))))))))
 
-(define-unit ((de hypr))
-  (use-home-packages "hyprland")
+(define-feature hyprland
+  (feat-require 'wayland)
   
-  ;;(use-home-service (service home-hyprpaper-service-type))
+  (use-home-packages "hyprland")
   (use-home-service (service home-swww-service-type)))
-
-(hook-unit '(de hypr) '(system wayland))

@@ -16,12 +16,14 @@
 ;;; with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (my system shells)
+  #:use-module (ice-9 match)
   #:use-module (gnu)
   #:use-module (gnu home services)
   #:use-module (gnu home services shells)
   #:use-module (guix records)
   #:use-module (my core)
-  #:use-module (my utils units))
+  #:use-module (my utils features)
+  #:use-module (my utils defer))
 
 (define env-var-queue (make-hash-table))
 (define shell-alias-queue (make-hash-table))
@@ -92,21 +94,30 @@
     (string-concatenate
      (append general-queue shell-queue))))
 
-(define-unit ((system bash))
-  (eval-after-units
-   (use-home-service
-    (service home-bash-service-type
-             (home-bash-configuration
-              (guix-defaults? #f)
-              (bash-profile (list
-                             (plain-file "my-bash-login-commands"
-                                         (resolve-login-shell-command-queue 'bash))))
-              (bashrc (list
-                       (plain-file "my-bash-commands"
-                                   (resolve-shell-command-queue 'bash))))
-              (environment-variables (hash-map->list
-                                      (lambda (var val) (cons var val))
-                                      env-var-queue))
-              (aliases (hash-map->list
-                        (lambda (alias command) (cons alias command))
-                        shell-alias-queue)))))))
+(define-feature bash
+  (defer
+    (use-home-service
+     (service home-bash-service-type
+              (home-bash-configuration
+               (guix-defaults? #f)
+               
+               (bash-profile (list
+                              (plain-file "my-bash-login-commands"
+                                          (resolve-login-shell-command-queue 'bash))))
+               (bashrc (list
+                        (plain-file "my-bash-commands"
+                                    (resolve-shell-command-queue 'bash))))
+               
+               (environment-variables (hash-map->list
+                                       (lambda (var val) (cons var val))
+                                       env-var-queue))
+               
+               (aliases (hash-map->list
+                         (lambda (alias command) (cons alias command))
+                         shell-alias-queue)))))))
+
+
+(define-feature shell
+  (match system-shell
+    ('bash (feat-require 'bash))
+    (sh (error (format #f "Shell '~a' is not supported" sh)))))

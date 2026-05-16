@@ -18,10 +18,12 @@
 (define-module (my suites chat)
   #:use-module (gnu)
   #:use-module (my core)
-  #:use-module (my utils units)
+  #:use-module (my utils features)
   #:use-module (my system flatpak))
 
-(define-unit ((suites chat))
+(define-feature chat
+  (feat-require 'flatpak)
+  
   (use-home-packages "mumble")
   (use-flatpaks "dev.vencord.Vesktop")
   

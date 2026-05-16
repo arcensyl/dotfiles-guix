@@ -18,11 +18,10 @@
 (define-module (my suites gaming)
   #:use-module (gnu)
   #:use-module (my core)
-  #:use-module (my utils units)
-  #:use-module (my system flatpak)
+  #:use-module (my utils features)
   #:use-module (my packages gamescope))
 
-(define-unit ((suites gaming))
+(define-feature gaming
   (use-home-packages
    ;; Game-related Utilities
    gamescope
@@ -33,5 +32,3 @@
    "steam"
    "heroic"
    "prismlauncher"))
-
-(hook-unit '(suites gaming) '(system flatpak))

@@ -25,7 +25,7 @@
   #:use-module (guix records)
   #:use-module (my core)
   #:use-module (my theming)
-  #:use-module (my utils units)
+  #:use-module (my utils features)
   #:use-module (my system shells))
 
 (define-record-type* <home-emacs-configuration>
@@ -126,11 +126,11 @@
                             (file write-home-emacs-theme)))))))))
 (export home-emacs-service-type)
 
-(define-unit* ((apps editors emacs) #:key daemon?)
+(define-feature emacs
   (use-home-service
    (service home-emacs-service-type
             (home-emacs-configuration
-             (package (if (using-unit? '(system wayland)) emacs-pgtk emacs))
-             (daemon? daemon?))))
+             (package emacs-pgtk)
+             (daemon? #t))))
 
   (provide-shell-alias "emacs" "emacsclient -c"))

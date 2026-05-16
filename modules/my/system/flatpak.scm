@@ -24,7 +24,8 @@
   #:use-module (gnu home services)
   #:use-module (guix records)
   #:use-module (my core)
-  #:use-module (my utils units)
+  #:use-module (my utils features)
+  #:use-module (my utils defer)
   #:use-module (my utils misc)
   #:use-module (my system shells))
 
@@ -305,14 +306,14 @@
                                                 flatpak-id))))
 (export provide-flatpak-alias)
 
-(define-unit ((system flatpak))
+(define-feature flatpak
   (use-flatpaks "com.github.tchx84.Flatseal")
   (provide-flatpak-alias "flatseal" "com.github.tchx84.Flatseal")
   
-  (eval-after-units
-   (use-home-service
-    (service home-flatpak-service-type
-             (home-flatpak-configuration
-              (remotes (append (hash-map->alist flatpak-remote-queue)
-                               %default-flatpak-remotes))
-              (flatpaks flatpak-queue))))))
+  (defer
+    (use-home-service
+     (service home-flatpak-service-type
+              (home-flatpak-configuration
+               (remotes (append (hash-map->alist flatpak-remote-queue)
+                                %default-flatpak-remotes))
+               (flatpaks flatpak-queue))))))

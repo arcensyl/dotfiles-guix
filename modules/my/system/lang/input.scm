@@ -23,7 +23,8 @@
   #:use-module (gnu home services)
   #:use-module (gnu home services shepherd)
   #:use-module (my core)
-  #:use-module (my utils units)
+  #:use-module (my utils features)
+  #:use-module (my utils defer)
   #:use-module (my system nix))
 
 ;; HACK: This entire setup is cursed.
@@ -84,6 +85,8 @@
                           (list home-fcitx-shepherd-service)))))))
 (export home-fcitx-service-type)
 
-(define-unit ((system lang input))
+(define-feature input-methods
+  (feat-require 'nix)
+
   (use-home-service
    (service home-fcitx-service-type)))

@@ -23,7 +23,8 @@
   #:use-module (gnu home services)
   #:use-module (guix records)
   #:use-module (my core)
-  #:use-module (my utils units)
+  #:use-module (my utils features)
+  #:use-module (my utils defer)
   #:use-module (my system shells))
 
 
@@ -152,17 +153,19 @@
   (set! used-nix-packages (append used-nix-packages packages)))
 (export use-nix-packages)
 
-(define-unit ((system nix))
+(define-feature nix
   (use-nix-packages "nh")
   
-  (use-service (service nix-service-type
-                        (nix-configuration
-                         (extra-config
-                          (list "experimental-features = nix-command flakes")))))
+  (use-service
+   (service nix-service-type
+            (nix-configuration
+             (extra-config
+              (list "experimental-features = nix-command flakes")))))
   
-  (eval-after-units
-   (use-home-service (service home-flake-service-type
-                              (home-flake-configuration
-                               (path ".dotfiles/guix/gen/nix/flake.nix")
-                               (flake (nix-flake
-                                       (packages used-nix-packages))))))))
+  (defer
+    (use-home-service
+     (service home-flake-service-type
+              (home-flake-configuration
+               (path ".dotfiles/guix/gen/nix/flake.nix")
+               (flake (nix-flake
+                       (packages used-nix-packages))))))))

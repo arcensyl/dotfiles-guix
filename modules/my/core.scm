@@ -28,7 +28,7 @@
   #:use-module (gnu home services)
   #:use-module (guix)
   #:use-module (nongnu packages linux)
-  #:use-module (my utils units)
+  #:use-module (my utils features)
   #:use-module (my system shells)
   #:use-module (my system nix)
   #:use-module (my system flatpak))
@@ -42,6 +42,7 @@
 (define-public system-locale "en_US.utf8")
 (define-public system-timezone "UTC")
 (define-public system-keyboard-layout (keyboard-layout "us"))
+(define-public system-shell 'bash)
 
 ;; Settings for the main user, or "master", of this system.
 
@@ -159,10 +160,11 @@
 
    (swap-devices swap-space-queue)))
 
-(define-unit (core)
-  (unless (using-unit? '(system bash))
-    (error "The 'core' unit expects a shell unit to also be in use"))
-
+(define-feature core
+  (feat-require 'shell)
+  (feat-require 'flatpak)
+  (feat-require 'nix)
+  
   (use-substitute-server "https://substitutes.nonguix.org")
   (use-substitute-key (local-file "../../gen/auth/nonguix.pub"))
   
@@ -183,6 +185,3 @@
    ;; Config-related Tools
    "git"
    "just"))
-
-(hook-unit 'core '(system nix))
-(hook-unit 'core '(system flatpak))

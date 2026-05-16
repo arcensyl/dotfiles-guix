@@ -23,7 +23,7 @@
   #:use-module (guix records)
   #:use-module (my core)
   #:use-module (my theming)
-  #:use-module (my utils units)
+  #:use-module (my utils features)
   #:use-module (my utils misc)
   #:use-module (my packages nyxt))
 
@@ -136,7 +136,7 @@ It will error if called when the 'current-theme' parameter isn't set."
                             (provision '(nyxt))
                             (file write-home-nyxt-theme)))))))))
 
-(define-unit ((apps web nyxt))
+(define-feature nyxt
   (use-home-service (service home-nyxt-service-type
                              (home-nyxt-configuration
                               (extra-libraries
