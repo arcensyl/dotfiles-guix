@@ -139,3 +139,9 @@ If BASE is an empty string or '#f', return an empty string instead."
 Otherwise, return OBJ as is."
   (if (procedure? obj) (obj) obj))
 (export call-or-value)
+
+(define-syntax-rule (fluid-map! proc fluid)
+  "Update FLUID, in the current dynamic root, by mapping over it with PROC."
+  (fluid-set! fluid
+              (proc (fluid-ref fluid))))
+(export fluid-map!)
