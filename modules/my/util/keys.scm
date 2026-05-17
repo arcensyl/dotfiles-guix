@@ -15,12 +15,12 @@
 ;;; You should have received a copy of the GNU General Public License along
 ;;; with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (my utils keys)
+(define-module (my util keys)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-14)
   #:use-module (gnu)
   #:use-module (guix records)
-  #:use-module (my utils misc))
+  #:use-module (my util misc))
 
 ;; This record represents a single keybind, consisting of a base key and several modifiers.
 ;; This is the core part of my target-agnostic keybinding API.

@@ -18,7 +18,7 @@
 (define-module (my system lang japanese)
   #:use-module (gnu)
   #:use-module (my core)
-  #:use-module (my utils features)
+  #:use-module (my util features)
   #:use-module (my system nix)
   #:use-module (my system lang input)
   #:use-module (my system shells))

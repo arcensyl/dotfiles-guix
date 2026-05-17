@@ -25,7 +25,7 @@
   #:use-module (guix records)
   #:use-module (my core)
   #:use-module (my theming)
-  #:use-module (my utils features)
+  #:use-module (my util features)
   #:use-module (my system shells))
 
 (define-record-type* <home-emacs-configuration>

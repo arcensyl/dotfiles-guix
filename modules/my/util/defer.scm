@@ -15,8 +15,8 @@
 ;;; You should have received a copy of the GNU General Public License along
 ;;; with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (my utils defer)
-  #:use-module (my utils misc))
+(define-module (my util defer)
+  #:use-module (my util misc))
 
 (define ~deferred-queue~ (make-fluid #f))
 

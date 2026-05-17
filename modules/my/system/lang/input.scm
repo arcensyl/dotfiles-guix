@@ -23,8 +23,8 @@
   #:use-module (gnu home services)
   #:use-module (gnu home services shepherd)
   #:use-module (my core)
-  #:use-module (my utils features)
-  #:use-module (my utils defer)
+  #:use-module (my util features)
+  #:use-module (my util defer)
   #:use-module (my system nix))
 
 ;; HACK: This entire setup is cursed.

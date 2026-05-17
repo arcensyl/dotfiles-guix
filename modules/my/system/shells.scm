@@ -22,8 +22,8 @@
   #:use-module (gnu home services shells)
   #:use-module (guix records)
   #:use-module (my core)
-  #:use-module (my utils features)
-  #:use-module (my utils defer))
+  #:use-module (my util features)
+  #:use-module (my util defer))
 
 (define env-var-queue (make-hash-table))
 (define shell-alias-queue (make-hash-table))

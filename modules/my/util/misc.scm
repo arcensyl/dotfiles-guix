@@ -15,7 +15,7 @@
 ;;; You should have received a copy of the GNU General Public License along
 ;;; with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (my utils misc)
+(define-module (my util misc)
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 match))
 

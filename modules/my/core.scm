@@ -28,7 +28,7 @@
   #:use-module (gnu home services)
   #:use-module (guix)
   #:use-module (nongnu packages linux)
-  #:use-module (my utils features)
+  #:use-module (my util features)
   #:use-module (my system shells)
   #:use-module (my system nix)
   #:use-module (my system flatpak))

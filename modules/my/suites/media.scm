@@ -25,8 +25,8 @@
   #:use-module (gnu home services shepherd)
   #:use-module (guix records)
   #:use-module (my core)
-  #:use-module (my utils features)
-  #:use-module (my utils misc)
+  #:use-module (my util features)
+  #:use-module (my util misc)
   #:use-module (my system audio))
 
 (define-record-type* <home-mpd-configuration>

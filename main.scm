@@ -25,7 +25,7 @@
 
 (use-modules (ice-9 format)
              (my core)
-             (my utils defer))
+             (my util defer))
 
 (define host-config-file (string-append "./hosts/" system-name "/config.scm"))
 (define host-hardware-file (string-append "./hosts/" system-name "/hardware.scm"))

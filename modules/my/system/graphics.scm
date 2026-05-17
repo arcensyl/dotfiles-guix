@@ -20,7 +20,7 @@
   #:use-module (gnu services shepherd)
   #:use-module (gnu home services shepherd)
   #:use-module (my core)
-  #:use-module (my utils features))
+  #:use-module (my util features))
 
 (define home-wayland-shepherd-service
   (shepherd-service

@@ -20,7 +20,7 @@
   #:use-module (gnu home services desktop)
   #:use-module (gnu home services sound)
   #:use-module (my core)
-  #:use-module (my utils features))
+  #:use-module (my util features))
 
 (define-feature-stub audio)
 

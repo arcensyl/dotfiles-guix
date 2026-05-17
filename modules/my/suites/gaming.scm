@@ -18,7 +18,7 @@
 (define-module (my suites gaming)
   #:use-module (gnu)
   #:use-module (my core)
-  #:use-module (my utils features)
+  #:use-module (my util features)
   #:use-module (my packages gamescope))
 
 (define-feature gaming

@@ -23,9 +23,9 @@
   #:use-module (gnu home services)
   #:use-module (guix records)
   #:use-module (my core)
-  #:use-module (my utils features)
-  #:use-module (my utils defer)
-  #:use-module (my utils misc))
+  #:use-module (my util features)
+  #:use-module (my util defer)
+  #:use-module (my util misc))
 
 (define-record-type* <theme>
   theme make-theme

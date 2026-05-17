@@ -18,7 +18,7 @@
 (define-module (my suites chat)
   #:use-module (gnu)
   #:use-module (my core)
-  #:use-module (my utils features)
+  #:use-module (my util features)
   #:use-module (my system flatpak))
 
 (define-feature chat
