@@ -75,16 +75,6 @@ If LST has too much nesting, this procedure could cause a stack overflow."
   (set! lst (cons elt lst)))
 (export push!)
 
-(define-syntax-rule (boolean->true-or-false bool)
-  "Return \"true\" or \"false\" depending on the value of BOOL."
-  (if bool "true" "false"))
-(export boolean->true-or-false)
-
-(define-syntax-rule (boolean->yes-or-no bool)
-  "Return \"yes\" or \"no\" depending on the value of BOOL."
-  (if bool "yes" "no"))
-(export boolean->yes-or-no)
-
 (define* (list->hash-set lst #:optional (insert-fn hash-set!) (value #t))
   "Convert LST into a hash map.
 Each item in LST will become a key, which all point to VALUE.
@@ -126,13 +116,62 @@ Each key will become a pair's car, with the respective value becoming the cdr."
   (hash-map->list (lambda (_ val) val)
                   table))
 
-(define* (maybe-wrap-string base #:optional prefix affix)
-  "Conditionally wrap BASE with PREFIX and AFFIX.
-If BASE is an empty string or '#f', return an empty string instead."
-  (if (and base (not (equal? base "")))
-      (string-append (or prefix "") base (or affix ""))
+(define-public (filled-string? obj)
+  "Return #t if OBJ is a filled string.
+A string is considered filled if it has one or more characters."
+  (if (and (string? obj) (< 0 (string-length obj)))
+      #t #f))
+
+(define-public (string-dup str n)
+  "Return a string where STR is repeated N times."
+  (string-join (make-list n str) ""))
+
+;; TODO: Rename 'wrap-string' to 'string-wrap'.
+
+(define* (wrap-string str prefix #:optional suffix)
+  "Wrap STR with PREFIX and optionally SUFFIX.
+If SUFFIX isn't provided, PREFIX will surround STR on both sides."
+  (string-append prefix str (or suffix prefix)))
+(export wrap-string)
+
+(define* (maybe-wrap-string str prefix #:optional suffix)
+  "Like 'wrap-string', but only wraps STR when it is a filled string.
+If STR is #f or an empty string, this will just return an empty string instead."
+  (if (filled-string? str)
+      (wrap-string str prefix suffix)
       ""))
 (export maybe-wrap-string)
+
+(define-syntax-rule (as-joined-string sep str ...)
+  "Join every STR into a single string delimited by SEP.
+If a STR is empty or not a string, it will be discarded."
+  (string-join (filter filled-string? (list str ...)) sep))
+(export as-joined-string)
+
+(define-syntax-rule (with-indent char n sep str ...)
+  "Indent each STR with N copies of CHAR, and join them into a single string.
+The joined string will be delimited with SEP.
+If a STR is empty or not a string, it will be discarded."
+  (let ((indent (make-string n char)))
+    (string-join (map (lambda (s)
+                        (string-append indent s))
+                      (filter filled-string? (list str ...)))
+                 sep)))
+(export with-indent)
+
+(define-syntax-rule (with-space-indent n sep str ...)
+  "Indent each STR with N spaces, and join them into a single string.
+This joined string will be delimited with SEP.
+If a STR is empty or not a string, it will be discarded."
+  (with-indent #\space n sep str ...))
+(export with-space-indent)
+
+(define-syntax-rule (with-tab-indent sep str ...)
+  "Indent each STR with a tab, and join them into a single string.
+This joined string will be delimited with SEP.
+If a STR is empty or not a string, it will be discarded."
+  (with-indent #\tab 1 sep str ...))
+(export with-tab-indent)
 
 (define-syntax-rule (call-or-value obj)
   "If OBJ is a procedure, call it with no arguments and return the result.
@@ -145,3 +184,28 @@ Otherwise, return OBJ as is."
   (fluid-set! fluid
               (proc (fluid-ref fluid))))
 (export fluid-map!)
+
+(define-syntax-rule (boolean->true-or-false bool)
+  "Return \"true\" or \"false\" depending on the value of BOOL."
+  (if bool "true" "false"))
+(export boolean->true-or-false)
+
+(define-syntax-rule (boolean->yes-or-no bool)
+  "Return \"yes\" or \"no\" depending on the value of BOOL."
+  (if bool "yes" "no"))
+(export boolean->yes-or-no)
+
+(define* (write-key-value-pair key val #:optional sep term)
+  "Return a string saying that KEY is equal to VAL, using SEP to connect them.
+KEY and VAL will be connected with SEP, which defaults to \"=\".
+If TERM is provided, it will placed at the end of the string."
+  (string-append key (or sep "=") val (or term "")))
+(export write-key-value-pair)
+
+(define* (maybe-write-key-value-pair key val #:optional sep term)
+  "Like 'write-key-value-pair', but only generates a string when VAL is a filled string.
+If VAL is #f or an empty string, this will just return an empty string instead."
+  (if (filled-string? val)
+      (write-key-value-pair key val sep term)
+      ""))
+(export maybe-write-key-value-pair)
