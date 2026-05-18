@@ -24,8 +24,8 @@
 (add-to-load-path "./modules")
 
 (use-modules (ice-9 format)
-             (my core)
-             (my util defer))
+             (arc core)
+             (arc util defer))
 
 (define host-config-file (string-append "./hosts/" system-name "/config.scm"))
 (define host-hardware-file (string-append "./hosts/" system-name "/hardware.scm"))
