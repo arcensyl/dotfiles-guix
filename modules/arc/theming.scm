@@ -20,9 +20,12 @@
   #:use-module (srfi srfi-2)
   #:use-module (ice-9 match)
   #:use-module (gnu)
+  #:use-module (gnu packages gnome)
+  #:use-module (gnu packages gnome-xyz)
   #:use-module (gnu home services)
   #:use-module (guix records)
   #:use-module (arc core)
+  #:use-module (arc system dconf)
   #:use-module (arc util features)
   #:use-module (arc util defer)
   #:use-module (arc util misc))
@@ -31,11 +34,20 @@
   theme make-theme
   theme?
 
+  (style theme-style
+    (default 'default))
+  
   (color-scheme theme-color-scheme)
 
   (wallpaper theme-wallpaper)
 
-  (cursor theme-cursor))
+  (cursor theme-cursor)
+
+  (icon-pack theme-icon-pack
+             (default %default-icon-pack))
+  
+  (gtk-theme theme-gtk-theme
+             (default %default-gtk-theme)))
 (export theme
         theme-color-scheme
         theme-wallpaper
@@ -200,6 +212,38 @@
         cursor-format
         cursor-size)
 
+(define-record-type* <icon-pack>
+  icon-pack make-icon-pack
+  icon-pack?
+
+  (package icon-pack-package)
+  
+  (name icon-pack-name))
+(export icon-pack
+        icon-pack-package
+        icon-pack-name)
+
+(define %default-icon-pack
+  (icon-pack
+   (package papirus-icon-theme)
+   (name "Papirus-Light")))
+
+(define-record-type* <gtk-theme>
+  gtk-theme make-gtk-theme
+  gtk-theme?
+
+  (package gtk-theme-package)
+  
+  (name gtk-theme-name))
+(export gtk-theme
+        gtk-theme-package
+        gtk-theme-name)
+
+(define %default-gtk-theme
+  (gtk-theme
+   (package libadwaita)
+   (name "Adwaita")))
+
 (define-record-type* <theming-target>
   theming-target make-theming-target
   theming-target?
@@ -234,8 +278,44 @@
            
            (_ (error (format #f "Cursor format '~a' is invalid" fmt)))))))))
 
+;; TODO: Merge the following two procedures.
+
+(define (write-gtk3-settings)
+  (cons ".config/gtk-3.0/settings.ini"
+        (let* ((gtk (theme-gtk-theme (current-theme)))
+               (gtk-name (gtk-theme-name gtk))
+               (icons (theme-icon-pack (current-theme)))
+               (icons-name (icon-pack-name icons)))
+          (mixed-text-file "gtk3-settings.ini"
+                           "[Settings]\n"
+                           (write-key-value-pair "gtk-theme-name" gtk-name #f "\n")
+                           (write-key-value-pair "gtk-icon-theme-name" icons-name)))))
+
+(define (write-gtk4-settings)
+  (cons ".config/gtk-4.0/settings.ini"
+        (let* ((gtk (theme-gtk-theme (current-theme)))
+               (gtk-name (gtk-theme-name gtk))
+               (icons (theme-icon-pack (current-theme)))
+               (icons-name (icon-pack-name icons)))
+          (mixed-text-file "gtk4-settings.ini"
+                           "[Settings]\n"
+                           (write-key-value-pair "gtk-theme-name" gtk-name #f "\n")
+                           (write-key-value-pair "gtk-icon-theme-name" icons-name)))))
+
+(define base-gtk3-target
+  (theming-target
+   (provision 'base-gtk3)
+   (file write-gtk3-settings)))
+
+(define base-gtk4-target
+  (theming-target
+   (provision 'base-gtk4)
+   (file write-gtk4-settings)))
+
 (define %default-theming-targets
-  (list base-cursor-target))
+  (list base-cursor-target
+        base-gtk3-target
+        base-gtk4-target))
 
 (define-record-type* <home-theming-configuration>
   home-theming-configuration make-home-theming-configuration
@@ -245,6 +325,14 @@
 
   (targets home-theming-configuration-targets
            (default %default-theming-targets)))
+
+(define (dconf-gtk-settings config)
+  (let* ((theme (home-theming-configuration-theme config))
+         (gtk-name (gtk-theme-name (theme-gtk-theme theme)))
+         (icons-name (icon-pack-name (theme-icon-pack theme))))
+    #~`((org/gnome/desktop/interface
+         (gtk-theme #$gtk-name)
+         (icon-theme #$icons-name)))))
 
 (define-public home-theming-service-type
   (service-type
@@ -257,7 +345,13 @@
                         (lambda (config)
                           (list
                            (cursor-package
-                            (theme-cursor (home-theming-configuration-theme config))))))
+                            (theme-cursor (home-theming-configuration-theme config)))
+
+                           (icon-pack-package
+                            (theme-icon-pack (home-theming-configuration-theme config)))
+
+                           (gtk-theme-package
+                            (theme-gtk-theme (home-theming-configuration-theme config))))))
 
      (service-extension home-files-service-type
                         (lambda (config)
@@ -273,7 +367,10 @@
                             (concatenate (map (lambda (target)
                                                 (call-or-value
                                                  (theming-target-variables target)))
-                                              (home-theming-configuration-targets config))))))))
+                                              (home-theming-configuration-targets config))))))
+
+     (service-extension home-dconf-load-service-type
+                        dconf-gtk-settings)))
    
    (compose concatenate)
    
@@ -293,6 +390,8 @@
   (defer
     (unless used-theme
       (error "You must provide a theme, with 'use-theme', to use the 'theming' feature"))
+
+    (use-home-service (service home-dconf-load-service-type))
     
     (use-home-service
      (service home-theming-service-type
