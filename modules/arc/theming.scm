@@ -27,6 +27,7 @@
   #:use-module (arc core)
   #:use-module (arc system dconf)
   #:use-module (arc util features)
+  #:use-module (arc util files)
   #:use-module (arc util defer)
   #:use-module (arc util misc))
 
@@ -334,6 +335,11 @@
          (gtk-theme #$gtk-name)
          (icon-theme #$icons-name)))))
 
+(define (theme-file->blocks file)
+  (list (merged-file-block
+         (content file)
+         (priority 15))))
+
 (define-public home-theming-service-type
   (service-type
    (name 'home-theming)
@@ -353,12 +359,12 @@
                            (gtk-theme-package
                             (theme-gtk-theme (home-theming-configuration-theme config))))))
 
-     (service-extension home-files-service-type
+     (service-extension home-merge-files-service-type
                         (lambda (config)
                           (with-theme (home-theming-configuration-theme config)
                             (filter-map (lambda (target)
-                                          (and-let* ((file (call-or-value (theming-target-file target))))
-                                            (list (car file) (cdr file))))
+                                          (and-let* ((entry (call-or-value (theming-target-file target))))
+                                            (cons (car entry) (theme-file->blocks (cdr entry)))))
                                         (home-theming-configuration-targets config)))))
      
      (service-extension home-environment-variables-service-type

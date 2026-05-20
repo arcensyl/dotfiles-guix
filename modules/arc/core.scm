@@ -29,6 +29,7 @@
   #:use-module (guix)
   #:use-module (nongnu packages linux)
   #:use-module (arc util features)
+  #:use-module (arc util files)
   #:use-module (arc system shells)
   #:use-module (arc system nix)
   #:use-module (arc system flatpak))
@@ -172,6 +173,8 @@
   (provide-env-var-segment "PATH" "$HOME/.dotfiles/guix/scripts")
 
   (provide-shell-alias "gx" "guix")
+
+  (use-home-service (service home-merge-files-service-type))
   
   (use-packages
    ;; Libraries and Toolchains
