@@ -42,7 +42,11 @@ Each modifier key is represented by a symbol with that key's name, such as 'supe
            (doc "An integer specifying the 'variant' of the base key.
 This is used for multiple keys that share the same symbol, such as function keys.
 This is usually unused, and it defaults to '#f'.")))
-(export keybind)
+(export keybind
+        keybind?
+        keybind-key
+        keybind-modifiers
+        keybind-variant)
 
 ;; TODO: Reconsider the logic of the 'parse-key' function.
 
@@ -79,7 +83,8 @@ Function keys should be specified like '<fn:N>', where N is the number of a spec
     (error (format #f "Key '~a' lacks a closing delimiter" key)))
   
   (match key
-    ("<dash>" "-")
+    ("<plus>" "+")
+    ((or "<dash>" "<minus>") "-")
     ("<left_angle>" "<")
     ("<right_angle>" ">")
     
@@ -112,7 +117,7 @@ Function keys should be specified like '<fn:N>', where N is the number of a spec
 (define (parse-modifier mod)
   "Parse MOD, a single character specifying a modifier key."
   (match (string-upcase mod)
-    ("U" 'super)
+    ("Z" 'super)
     ("M" 'meta)
     ("C" 'control)
     ("S" 'shift)
@@ -121,9 +126,10 @@ Function keys should be specified like '<fn:N>', where N is the number of a spec
 
 (define-public (specification->keybind spec)
   "Parse SPEC into a keybind record.
-A keybind specification follows an Emacs-like syntax, without support for chords.
+A keybind specification follows an Emacs-like syntax.
+Unlike keybinds in Emacs, this system doesn't support key chords.
 For example, 'C-c' is the specification for the base key 'c' with the control modifier key.
-Note that 'U' is used for the super modifier key, and 'M' is for the alt modifier key."
+Note that 'Z' is used for the super modifier key, and 'M' is for the alt modifier key."
   (let* ((parts (reverse (string-split spec #\-)))
          (key (string-downcase (car parts)))
          (modifiers (reverse (cdr parts))))
@@ -136,9 +142,9 @@ Note that 'U' is used for the super modifier key, and 'M' is for the alt modifie
 
      (variant (get-key-variant key)))))
 
-;; This macro parses SPEC into a keybind record.
-;; This is basically a compile-time version of the 'specification->keybind' procedure.
-;; To understand the specification format, please look at the docs of that procedure.
+;; This macro parses SPEC into a <keybind> record.
+;; This is the compile-time equivalent of the 'specification->keybind' procedure.
+;; For more information, please refer to its documentation.
 (define-syntax kb
   (lambda (x)
     (syntax-case x ()
@@ -222,6 +228,8 @@ Note that 'U' is used for the super modifier key, and 'M' is for the alt modifie
     (other other)))
 
 ;; TODO: Move this to the same file defining a Hyprland service.
+;; TODO: Rewrite this for Hyprland's new Lua config system.
+
 (define-matcher (keybind->hypr bind)
   "Convert BIND to a string following Hyprlang's syntax for keybinds."
   (($ <keybind> key modifiers variant)
