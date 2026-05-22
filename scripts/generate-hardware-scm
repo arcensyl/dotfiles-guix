@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# NOTE: This script is deprecated.
+# You shouldn't use this for any new systems.
+# Instead, my config now uses labels to refer to core file systems.
+
 # This script automatically generates a 'hardware.scm' file for HOST.
 
 # Be warned, this script currently makes a lot of assumption about the partitions on this system.

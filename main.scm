@@ -23,22 +23,23 @@
 ;; Before doing anything else, we need to ensure Guix can find my modules.
 (add-to-load-path "./modules")
 
-(use-modules (ice-9 format)
-             (arc core)
+(use-modules (arc core)
              (arc util defer))
+
+(unless system-name
+  (error "Option 'system-name' is required, but was never set"))
 
 (define host-config-file (string-append "./hosts/" system-name "/config.scm"))
 (define host-hardware-file (string-append "./hosts/" system-name "/hardware.scm"))
 
 (unless (file-exists? host-config-file)
-  (error (format #f "No 'config.scm' file found for the host '~a'." system-name)))
+  (error (format #f "No 'config.scm' file found for the host '~a'" system-name)))
 
 (unless (file-exists? host-hardware-file)
-  (error (format #f "No 'hardware.scm' file found for the host '~a'." system-name)))
+  (error (format #f "No 'hardware.scm' file found for the host '~a'" system-name)))
 
 (with-deferred
  (load host-config-file)
  (load host-hardware-file))
 
-;; (apply-all-units)
-(make-operating-system)
+(make-system)

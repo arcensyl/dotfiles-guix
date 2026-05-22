@@ -17,6 +17,7 @@
 
 (define-module (arc suites cli)
   #:use-module (gnu)
+  #:use-module (gnu packages dns)
   #:use-module (arc core)
   #:use-module (arc util features)
   #:use-module (arc system shells))
@@ -29,8 +30,8 @@
    "du-dust"
 
    ;; Networking
-   "curl"
    "wget"
+   (list isc-bind "utils")
 
    ;; Data Manipulation
    "jq"

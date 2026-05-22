@@ -19,6 +19,7 @@
 ;; It provides tools to set up a minimal system, and then extend it with extra services and packages.
 
 (define-module (arc core)
+  #:use-module (ice-9 match)
   #:use-module (gnu)
   #:use-module (gnu services guix)
   #:use-module (gnu services desktop)
@@ -30,16 +31,16 @@
   #:use-module (nongnu packages linux)
   #:use-module (arc util features)
   #:use-module (arc util files)
+  #:use-module (arc util defer)
   #:use-module (arc system shells)
   #:use-module (arc system nix)
   #:use-module (arc system flatpak))
 
 ;; Settings for this system.
 
-(define-public system-name
-  (or (getenv "GUIX_HOSTNAME")
-      (error "Environment variable GUIX_HOSTNAME is not set")))
+(define-public system-name (getenv "GUIX_HOSTNAME"))
 
+(define-public system-type 'server)
 (define-public system-locale "en_US.utf8")
 (define-public system-timezone "UTC")
 (define-public system-keyboard-layout (keyboard-layout "us"))
@@ -63,8 +64,12 @@
 (define substitute-server-queue '())
 (define substitute-key-queue '())
 
+(define activation-counter 0)
+(define home-activation-counter 0)
+
 (define (process-use-package-arg package)
   (cond ((package? package) package)
+        ((list? package) package)
         ((string? package) (specification->package package))
         (else (error "An item passed to 'use-packages' or 'use-home-packages' was not a package or specification"))))
 
@@ -108,7 +113,36 @@
     (error "KEY, passed to 'use-substitute-key', must be a file-like object"))
   (set! substitute-key-queue (cons key substitute-key-queue)))
 
-(define-public (make-operating-system)
+(define-public (use-extra-special-file name file)
+  (use-service (extra-special-file name file)))
+
+(define-public (run-on-activation gexp)
+  "Run GEXP at the system's \"activation time\"."
+  (set! activation-counter (1+ activation-counter))
+  
+  (let* ((raw-service-name (string-append "anonymous-activation-"
+                                         (number->string activation-counter)))
+        (service-name (string->symbol raw-service-name)))
+    (use-service
+     (simple-service service-name
+                     activation-service-type
+                     gexp))))
+
+(define-public (run-on-home-activation gexp)
+  "Run GEXP at the home environment's \"activation time\"."
+  (set! home-activation-counter (1+ home-activation-counter))
+  
+  (let* ((raw-service-name (string-append "anonymous-home-activation-"
+                                         (number->string home-activation-counter)))
+        (service-name (string->symbol raw-service-name)))
+    (use-home-service
+     (simple-service service-name
+                     home-activation-service-type
+                     gexp))))
+
+;; TODO: Consider giving servers their own operating system constructor.
+
+(define-public (make-system)
   (use-service
    (service guix-home-service-type
             (list (list master-name
@@ -116,29 +150,36 @@
                          (packages (hash-map->list (lambda (key _) key) home-package-queue))
                          (services (append home-service-queue %base-home-services)))))))
   
+  (use-home-service (service home-merge-files-service-type))
+
+  (match system-type
+    ('server (make-basic-system))
+    ((or 'desktop 'laptop) (make-desktop-system))
+    ('flash (make-flash-system))
+    (_ (error (format #f "System type '~a' is not supported" system-type)))))
+
+(define (make-basic-system)
   (operating-system
    (kernel linux)
    (firmware (list linux-firmware))
 
+   (host-name (or system-name "guix"))
    (locale system-locale)
    (timezone system-timezone)
    (keyboard-layout system-keyboard-layout)
-   (host-name system-name)
 
    (users (cons* (user-account
                   (name master-name)
+                  (password (crypt "111" "guix-salt"))
                   (comment master-comment)
-                  (group "users")
                   (home-directory master-home-directory)
+                  (group "users")
                   (supplementary-groups '("wheel" "netdev" "audio" "video")))
                  %base-user-accounts))
 
    (services
     (append service-queue
-            (modify-services %desktop-services
-                             (delete gdm-service-type)
-                             (delete pulseaudio-service-type)
-
+            (modify-services %base-services
                              (guix-service-type config => (guix-configuration
                                                            (inherit config)
                                                            (substitute-urls
@@ -161,21 +202,62 @@
 
    (swap-devices swap-space-queue)))
 
+(define (make-desktop-system)
+  (operating-system
+   (inherit (make-basic-system))
+
+   (services
+    (append service-queue
+            (modify-services %desktop-services
+                             (delete gdm-service-type)
+                             (delete pulseaudio-service-type)
+
+                             (guix-service-type config => (guix-configuration
+                                                           (inherit config)
+                                                           (substitute-urls
+                                                            (append substitute-server-queue
+                                                                    %default-substitute-urls))
+                                                           (authorized-keys
+                                                            (append substitute-key-queue
+                                                                    %default-authorized-guix-keys)))))))))
+
+(define (make-flash-system)
+  (operating-system
+   (inherit (make-desktop-system))
+
+   ;; NOTE: Password authentication for 'sudo' is disabled on flash systems.
+   ;; This was decided because many operations from an installer/rescue USB need root access.
+   ;; Flash systems should be considered insecure, and they should only be used when needed.
+   
+   (sudoers-file
+    (plain-file "flash-sudoers"
+                "root ALL=(ALL) ALL\n%wheel ALL=(ALL) NOPASSWD: ALL\n"))
+
+   (bootloader (bootloader-configuration
+                (bootloader grub-efi-removable-bootloader)
+                (targets (list "/boot/efi"))
+                (keyboard-layout system-keyboard-layout)))
+   
+   (file-systems (cons* (file-system
+                         (mount-point "/")
+                         (device (file-system-label "guix-flash"))
+                         (type "ext4"))
+                        %base-file-systems))
+
+   (swap-devices '())))
+
 (define-feature core
-  (feat-require 'shell)
-  (feat-require 'flatpak)
   (feat-require 'nix)
+  (feat-require 'shell)
   
   (use-substitute-server "https://substitutes.nonguix.org")
-  (use-substitute-key (local-file "../../gen/auth/nonguix.pub"))
-  
-  (provide-env-var "GUIX_HOSTNAME" system-name)
+  (use-substitute-key (local-file "../../keys/nonguix.pub"))
+
+  (defer (provide-env-var "GUIX_HOSTNAME" system-name))
   (provide-env-var-segment "PATH" "$HOME/.dotfiles/guix/scripts")
 
   (provide-shell-alias "gx" "guix")
 
-  (use-home-service (service home-merge-files-service-type))
-  
   (use-packages
    ;; Libraries and Toolchains
    "gcc-toolchain"
@@ -184,6 +266,7 @@
    ;; CLI Essentials
    "fastfetch"
    "openssh"
+   "curl"
 
    ;; Config-related Tools
    "git"
