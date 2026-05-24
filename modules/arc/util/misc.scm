@@ -19,6 +19,12 @@
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 match))
 
+(define-syntax-rule (errorf message args ...)
+  "Like 'error', but it also formats MESSAGE with ARGS.
+This specifically uses Guile's 'simple-format' procedure."
+  (error (simple-format #f message args ...)))
+(export errorf)
+
 ;; This macro allows you to define a named procedure that matches on its first argument.
 ;; You can also specify additional arguments, though those aren't checked during pattern matching.
 (define-syntax define-matcher

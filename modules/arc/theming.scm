@@ -152,7 +152,7 @@
     ((or 14 'base0E) (color-scheme-base0E (theme-color-scheme (current-theme))))
     ((or 15 'base0F) (color-scheme-base0F (theme-color-scheme (current-theme))))
     
-    (_ (error (format #f "Color identifier '~a' is not recognized" color-id)))))
+    (_ (errorf "Color identifier '~a' is not recognized" color-id))))
 
 (define-public (color-dec-r base)
   (color
@@ -277,7 +277,7 @@
                    (cons "HYPRCURSOR_THEME" name)
                    (cons "HYPRCURSOR_SIZE" (number->string size))))
            
-           (_ (error (format #f "Cursor format '~a' is invalid" fmt)))))))))
+           (_ (errorf "Cursor format '~a' is invalid" fmt))))))))
 
 ;; TODO: Merge the following two procedures.
 

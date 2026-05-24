@@ -32,6 +32,7 @@
   #:use-module (arc util features)
   #:use-module (arc util files)
   #:use-module (arc util defer)
+  #:use-module (arc util misc)
   #:use-module (arc system shells)
   #:use-module (arc system nix)
   #:use-module (arc system flatpak))
@@ -156,7 +157,7 @@
     ('server (make-basic-system))
     ((or 'desktop 'laptop) (make-desktop-system))
     ('flash (make-flash-system))
-    (_ (error (format #f "System type '~a' is not supported" system-type)))))
+    (_ (errorf "System type '~a' is not supported" system-type))))
 
 (define (make-basic-system)
   (operating-system

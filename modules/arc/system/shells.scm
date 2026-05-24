@@ -23,7 +23,8 @@
   #:use-module (guix records)
   #:use-module (arc core)
   #:use-module (arc util features)
-  #:use-module (arc util defer))
+  #:use-module (arc util defer)
+  #:use-module (arc util misc))
 
 (define env-var-queue (make-hash-table))
 (define shell-alias-queue (make-hash-table))
@@ -120,4 +121,4 @@
 (define-feature shell
   (match system-shell
     ('bash (feat-require 'bash))
-    (sh (error (format #f "Shell '~a' is not supported" sh)))))
+    (sh (errorf "Shell '~a' is not supported" sh))))

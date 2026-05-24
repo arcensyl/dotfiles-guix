@@ -58,7 +58,7 @@ This includes all alphanumeric characters, and all symbols besides dashes and an
     (error "Key cannot be empty"))
   
   (unless (= (string-length key) 1)
-    (error (format #f "Key '~a' should only contain one character" key)))
+    (errorf "Key '~a' should only contain one character" key))
   
   key)
 
@@ -80,7 +80,7 @@ This is like 'parse-key', but for special keys that can't be directly represente
 KEY should be a string containing the key's name surrounded by angle brackets.
 Function keys should be specified like '<fn:N>', where N is the number of a specific function key."
   (unless (string-suffix? ">" key)
-    (error (format #f "Key '~a' lacks a closing delimiter" key)))
+    (errorf "Key '~a' lacks a closing delimiter" key))
   
   (match key
     ("<plus>" "+")
@@ -112,7 +112,7 @@ Function keys should be specified like '<fn:N>', where N is the number of a spec
     ("<right>" 'arrow-right)
 
     ((? (lambda (s) (string-prefix? "<fn:" s)) _) 'function)
-    (other (error (format #f "Key '~a' is invalid" other)))))
+    (other (errorf "Key '~a' is invalid" other))))
 
 (define (parse-modifier mod)
   "Parse MOD, a single character specifying a modifier key."
@@ -122,7 +122,7 @@ Function keys should be specified like '<fn:N>', where N is the number of a spec
     ("C" 'control)
     ("S" 'shift)
 
-    (other (error (format #f "Key '~a' is an invalid modifier" other)))))
+    (other (errorf "Key '~a' is an invalid modifier" other))))
 
 (define-public (specification->keybind spec)
   "Parse SPEC into a keybind record.

@@ -15,7 +15,8 @@
 ;;; You should have received a copy of the GNU General Public License along
 ;;; with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (arc util features))
+(define-module (arc util features)
+  #:use-module (arc util misc))
 
 (define *config-features* (make-hash-table))
 
@@ -49,12 +50,12 @@ Specifically, this will call a feature's loader if it hasn't already been provid
 As stub features lack a loader, this will error when trying to load them."
   (let ((handle (hashq-get-handle *config-features* feature)))
     (unless handle
-      (error (format #f "Attempted to require the non-existent feature '~a'" feature)))
+      (errorf "Attempted to require the non-existent feature '~a'" feature))
       
     (unless (hashq-ref *provided-features* feature)
       (let ((loader (cdr handle)))
         (if (procedure? loader)
             (loader)
-            (error (format #f "Stub feature '~a' is not provided" feature))))))
+            (errorf "Stub feature '~a' is not provided" feature)))))
 
   (feat-provide feature))

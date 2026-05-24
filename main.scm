@@ -24,7 +24,8 @@
 (add-to-load-path "./modules")
 
 (use-modules (arc core)
-             (arc util defer))
+             (arc util defer)
+             (arc util misc))
 
 (unless system-name
   (error "Option 'system-name' is required, but was never set"))
@@ -33,10 +34,10 @@
 (define host-hardware-file (string-append "./hosts/" system-name "/hardware.scm"))
 
 (unless (file-exists? host-config-file)
-  (error (format #f "No 'config.scm' file found for the host '~a'" system-name)))
+  (errorf "No 'config.scm' file found for the host '~a'" system-name))
 
 (unless (file-exists? host-hardware-file)
-  (error (format #f "No 'hardware.scm' file found for the host '~a'" system-name)))
+  (errorf "No 'hardware.scm' file found for the host '~a'" system-name))
 
 (with-deferred
  (load host-config-file)
