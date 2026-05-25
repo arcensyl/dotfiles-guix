@@ -279,44 +279,8 @@
            
            (_ (errorf "Cursor format '~a' is invalid" fmt))))))))
 
-;; TODO: Merge the following two procedures.
-
-(define (write-gtk3-settings)
-  (cons ".config/gtk-3.0/settings.ini"
-        (let* ((gtk (theme-gtk-theme (current-theme)))
-               (gtk-name (gtk-theme-name gtk))
-               (icons (theme-icon-pack (current-theme)))
-               (icons-name (icon-pack-name icons)))
-          (mixed-text-file "gtk3-settings.ini"
-                           "[Settings]\n"
-                           (write-key-value-pair "gtk-theme-name" gtk-name #f "\n")
-                           (write-key-value-pair "gtk-icon-theme-name" icons-name)))))
-
-(define (write-gtk4-settings)
-  (cons ".config/gtk-4.0/settings.ini"
-        (let* ((gtk (theme-gtk-theme (current-theme)))
-               (gtk-name (gtk-theme-name gtk))
-               (icons (theme-icon-pack (current-theme)))
-               (icons-name (icon-pack-name icons)))
-          (mixed-text-file "gtk4-settings.ini"
-                           "[Settings]\n"
-                           (write-key-value-pair "gtk-theme-name" gtk-name #f "\n")
-                           (write-key-value-pair "gtk-icon-theme-name" icons-name)))))
-
-(define base-gtk3-target
-  (theming-target
-   (provision 'base-gtk3)
-   (file write-gtk3-settings)))
-
-(define base-gtk4-target
-  (theming-target
-   (provision 'base-gtk4)
-   (file write-gtk4-settings)))
-
 (define %default-theming-targets
-  (list base-cursor-target
-        base-gtk3-target
-        base-gtk4-target))
+  (list base-cursor-target))
 
 (define-record-type* <home-theming-configuration>
   home-theming-configuration make-home-theming-configuration

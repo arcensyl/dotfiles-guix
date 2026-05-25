@@ -25,10 +25,15 @@
   #:use-module (arc core)
   #:use-module (arc theming)
   #:use-module (arc util features)
+  #:use-module (arc util codecs)
   #:use-module (arc system graphics)
   #:use-module (arc de wallpaper))
 
 ;; TODO: Write a custom home service for configuring Hyprland.
+
+(define-public hypr-codec
+  (let ((c (make-chain-codec y-or-n-codec basic-codec)))
+    (make-kv-codec c #f " = ")))
 
 ;; FIXME: Hyprpaper is completely broken on my system; I'll investigate this later.
 
