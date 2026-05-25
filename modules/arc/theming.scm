@@ -28,6 +28,7 @@
   #:use-module (arc system dconf)
   #:use-module (arc util features)
   #:use-module (arc util files)
+  #:use-module (arc util codecs)
   #:use-module (arc util defer)
   #:use-module (arc util misc))
 
@@ -42,6 +43,10 @@
 
   (wallpaper theme-wallpaper)
 
+  (font-sans theme-font-sans)
+
+  (font-mono theme-font-mono)
+  
   (cursor theme-cursor)
 
   (icon-pack theme-icon-pack
@@ -52,7 +57,11 @@
 (export theme
         theme-color-scheme
         theme-wallpaper
-        theme-cursor)
+        theme-font-sans
+        theme-font-mono
+        theme-cursor
+        theme-icon-pack
+        theme-gtk-theme)
 
 (define-public current-theme (make-parameter #f))
 
@@ -193,6 +202,20 @@
     (base0E (hex->color "ba8baf"))
     (base0F (hex->color "a16946"))))
 
+(define-record-type* <font>
+  font make-font
+  font?
+
+  (package font-package)
+  
+  (name font-name)
+
+  (size font-size
+        (default 11)))
+(export font
+        font-package
+        font-name
+        font-size)
 
 (define-record-type* <cursor>
   cursor make-cursor
@@ -294,10 +317,17 @@
 (define (dconf-gtk-settings config)
   (let* ((theme (home-theming-configuration-theme config))
          (gtk-name (gtk-theme-name (theme-gtk-theme theme)))
-         (icons-name (icon-pack-name (theme-icon-pack theme))))
+         (icons-name (icon-pack-name (theme-icon-pack theme)))
+         (sans-font-name (font-name (theme-font-sans theme)))
+         (sans-font-size (font-size (theme-font-sans theme)))
+         (mono-font-name (font-name (theme-font-mono theme)))
+         (mono-font-size (font-size (theme-font-mono theme)))
+         (fc (make-kv-codec basic-codec)))
     #~`((org/gnome/desktop/interface
          (gtk-theme #$gtk-name)
-         (icon-theme #$icons-name)))))
+         (icon-theme #$icons-name)
+         (font-name #$(encode fc sans-font-name sans-font-size))
+         (monospace-font-name #$(encode fc mono-font-name mono-font-size))))))
 
 (define (theme-file->blocks file)
   (list (merged-file-block
@@ -313,15 +343,13 @@
     (list
      (service-extension home-profile-service-type
                         (lambda (config)
-                          (list
-                           (cursor-package
-                            (theme-cursor (home-theming-configuration-theme config)))
-
-                           (icon-pack-package
-                            (theme-icon-pack (home-theming-configuration-theme config)))
-
-                           (gtk-theme-package
-                            (theme-gtk-theme (home-theming-configuration-theme config))))))
+                          (let ((theme (home-theming-configuration-theme config)))
+                            (list
+                             (font-package (theme-font-sans theme))
+                             (font-package (theme-font-mono theme))
+                             (cursor-package (theme-cursor theme))
+                             (icon-pack-package (theme-icon-pack theme))
+                             (gtk-theme-package (theme-gtk-theme theme))))))
 
      (service-extension home-merge-files-service-type
                         (lambda (config)

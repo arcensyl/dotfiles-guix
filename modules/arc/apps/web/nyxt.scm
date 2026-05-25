@@ -67,6 +67,8 @@ This works by pointing ASDF to the installed libaries inside the system store."
            
            ")))"))))
 
+;; TODO: Set up system fonts in Nyxt.
+
 (define (write-home-nyxt-theme)
   "Write a theme for Nyxt based on the system's color scheme.
 This procedure is used in Nyxt's target for the theming service.

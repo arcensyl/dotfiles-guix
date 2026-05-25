@@ -56,34 +56,6 @@
    (description "Minecraft to Mineclonia texture pack converter")
    (license license:expat)))
 
-
-(define-public font-fairfax-hd
-  (package
-    (name "font-fairfax-hd")
-    (version "2026-02-08")
-    
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/kreativekorp/open-relay")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1nw98ph6iqrms5ix2ap8b5nvr3ad1vgvxry7lxy6gf4dp36jky6s"))))
-    
-    (build-system copy-build-system)
-    
-    (arguments
-     `(#:install-plan
-       '(("FairfaxHD" "share/fonts/truetype/"
-          #:include-regexp ("\\.ttf$")))))
-    
-    (home-page "http://www.kreativekorp.com/software/fonts/fairfaxhd")
-    (synopsis "Fairfax HD monospace font")
-    (description "Fairfax HD is a halfwidth scalable monospace font for terminals, text editors, IDEs, etc.")
-    (license license:silofl1.1)))
-
 (define-public (make-java-wrapper tag java-package)
   "Create a package that exposes JDK binaries under versioned names."
   (package
