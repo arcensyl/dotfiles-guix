@@ -1,6 +1,7 @@
 (define-module (arc util codecs)
   #:use-module (srfi srfi-1)
-  #:use-module (gnu)
+  #:use-module (srfi srfi-2)
+  #:use-module (arc theming)
   #:use-module (arc util misc))
 
 (define* (encode codec #:rest args)
@@ -34,14 +35,18 @@ Note that this codec doesn't support lists or pairs."
    ((symbol? x) (symbol->string x))
    ((number? x) (number->string x))
    ((boolean? x) (if x "true" "false"))
+   ((color? x) (color->hex x))
    (else #f)))
+
+;; TODO: Make 'prog-codec' escape quotes inside strings.
 
 (define-public (prog-codec x)
   "A general-purpose codec that takes a single argument.
-This codec aims to emulate syntax used in most programming languages.
+This codec aims to emulate the syntax used in many programming languages.
 For example, it'll automatically wrap a string in quotes."
   (cond
    ((string? x) (wrap-string x "\""))
+   ((color? x) (wrap-string (color->hex x) "\""))
    (else (basic-codec x))))
 
 (define-public (y-or-n-codec x)
@@ -51,9 +56,12 @@ Depending on that boolean's value, it will return \"yes\" or \"no\"."
       (if x "yes" "no")
       #f))
 
+;; TODO: Allow list codecs to work recursively.
+
 (define* (make-list-codec inner #:optional (connector " "))
   "Make a codec that takes a list as its only argument.
-Each element will be encoded using INNER, and then joined with CONNECTOR.
+Each element will be encoded using INNER, before they are joined into a string.
+In this joined string, CONNECTOR will be used as the delimiter between elements.
 By default, CONNECTOR is a single space.
 
 Elements not supported by INNER will automatically be filtered out."
@@ -63,6 +71,16 @@ Elements not supported by INNER will automatically be filtered out."
                      connector)
         #f)))
 (export make-list-codec)
+
+(define* (make-variadic-codec inner #:optional (connector " "))
+  "Make a codec that takes a variadic number of arguments.
+All arguments will be encoded using INNER, and then joined with CONNECTOR.
+By default, CONNECTOR is a single space.
+
+Arguments not supported by INNER will be skipped over."
+  (let ((codec (make-list-codec inner connector)))
+    (lambda* (#:rest args) (codec args))))
+(export make-variadic-codec)
 
 (define* (make-pair-codec inner #:optional val-codec (connector " "))
   "Make a codec that takes a pair as its only argument.
@@ -100,10 +118,18 @@ INNER codecs are expected to have the same arity."
     (or (apply inner args) ...)))
 (export make-chain-codec)
 
+(define-public (make-guarded-codec inner pred)
+  "Wrap the codec INNER so its guarded by the procedure PRED.
+When called, this codec will also call PRED with the same arguments.
+If PRED returns #f, this codec will automatically fail and return #f too."
+  (lambda* (#:rest args)
+    (if (apply pred args)
+        (apply inner args)
+        #f)))
+
 (define* (make-cond-codec inner #:optional (fallback ""))
-  "Make a codec that takes one or more arguments.
-These arguments will usually be encoded with INNER.
-If any argument is #f, this codec will return FALLBACK instead.
+  "Wrap the codec INNER to make it \"conditional\".
+This new codec will return FALLBACK If any of its arguments are #f.
 By default, FALLBACK is an empty string."
   (lambda* (#:rest args)
     (if (every identity args)
@@ -111,15 +137,48 @@ By default, FALLBACK is an empty string."
         fallback)))
 (export make-cond-codec)
 
-(define* (make-wrapping-codec inner prefix #:optional suffix)
-  "Make a codec that takes one or more arguments.
-These arguments will be encoded with INNER.
-
-The encoded string will then be wrapped with PREFIX and SUFFIX.
-If SUFFIX isn't provided, it'll default to the value of PREFIX."
+(define-public (make-mapping-codec inner proc)
+  "Wrap the codec INNER with string mapping logic.
+When INNER returns a string, PROC will be called on each character."
   (lambda* (#:rest args)
-    (let ((res (apply inner args)))
-      (if res
-          (wrap-string res prefix suffix)
-          #f))))
+    (and-let* ((res (apply inner args)))
+      (string-map proc res))))
+
+(define-public (make-recasing-codec inner upper?)
+  "Wrap the codec INNER with case-changing, or \"recasing\", logic.
+If UPPER? is #t, encoded strings will be converted to uppercase.
+Otherwise, they'll be converted to lowercase instead."
+  (lambda* (#:rest args)
+    (and-let* ((res (apply inner args)))
+      (if upper? (string-upcase res) (string-downcase res)))))
+
+(define-public (make-filtering-codec inner char-pred)
+  "Wrap the codec INNER with string filtering logic.
+When INNER returns a string, it will be filtered with CHAR-PRED.
+
+CHAR-PRED should be a procedure that takes a character.
+It can also be character set if you want to test for membership."
+  (lambda* (#:rest args)
+    (and-let* ((res (apply inner args)))
+      (string-filter char-pred res))))
+
+(define-public (make-alphanumeric-codec inner)
+  "Wrap the codec INNER to automatically exclude non-alphanumeric characters.
+When INNER returns a string, it will be filtered with 'char-set:letter+digit'."
+  (make-filtering-codec inner char-set:letter+digit))
+
+(define-public (make-compact-codec inner)
+  "Wrap the codec INNER to automatically exclude whitespace characters.
+When INNER returns a string, it will be filtered with a character set.
+This character set is the difference of 'char-set:full' and 'char-set:whitespace'."
+  (make-filtering-codec inner (char-set-difference char-set:full
+                                                   char-set:whitespace)))
+
+(define* (make-wrapping-codec inner prefix #:optional suffix)
+  "Wrap the codec INNER with string wrapping logic.
+When INNER returns a string, it'll be wrapped with PREFIX and SUFFIX.
+If SUFFIX isn't provided, PREFIX will be added to both sides."
+  (lambda* (#:rest args)
+    (and-let* ((res (apply inner args)))
+      (wrap-string res prefix suffix))))
 (export make-wrapping-codec)

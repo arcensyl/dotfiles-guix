@@ -83,6 +83,8 @@
   (blue color-blue
         (default 0)))
 (export color
+        make-color
+        color?
         color-red
         color-green
         color-blue)
@@ -122,6 +124,7 @@
   (base0E color-scheme-base0E)  ; Keywords, Storage, Selector, Markup Italic, Diff Changed
   (base0F color-scheme-base0F)) ; Deprecated, Opening/Closing Embedded Language Tags
 (export color-scheme
+        color-scheme?
         color-scheme-base00
         color-scheme-base01
         color-scheme-base02
@@ -213,6 +216,7 @@
   (size font-size
         (default 11)))
 (export font
+        font?
         font-package
         font-name
         font-size)
@@ -231,6 +235,7 @@
   (size cursor-size
         (default 24)))
 (export cursor
+        cursor?
         cursor-package
         cursor-name
         cursor-format
@@ -244,6 +249,7 @@
   
   (name icon-pack-name))
 (export icon-pack
+        icon-pack?
         icon-pack-package
         icon-pack-name)
 
@@ -260,6 +266,7 @@
   
   (name gtk-theme-name))
 (export gtk-theme
+        gtk-theme?
         gtk-theme-package
         gtk-theme-name)
 
@@ -313,6 +320,10 @@
 
   (targets home-theming-configuration-targets
            (default %default-theming-targets)))
+(export home-theming-configuration
+        home-theming-configuration?
+        home-theming-configuration-theme
+        home-theming-configuration-targets)
 
 (define (dconf-gtk-settings config)
   (let* ((theme (home-theming-configuration-theme config))
