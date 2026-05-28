@@ -28,7 +28,6 @@
   #:use-module (arc system dconf)
   #:use-module (arc util features)
   #:use-module (arc util files)
-  #:use-module (arc util codecs)
   #:use-module (arc util defer)
   #:use-module (arc util misc))
 
@@ -325,6 +324,25 @@
         home-theming-configuration-theme
         home-theming-configuration-targets)
 
+;; HACK: This import *must* be down here.
+;; If you move it up, you will encounter very cryptic errors.
+;; This issue is because of how these two modules depend on eachother.
+
+;; When Guile loads the codec module, it will try and import this one.
+;; It'll keep going until this line, which imports the module it came from.
+;; Instead of freezing, Guile actually catches and tries to handle this cycle.
+;; It continues by handing the codec module an incomplete view of this module.
+;; Because of this, the codec module cannot safely use anything below this line.
+
+;; TODO: Move colors to their own helper module.
+;; This is likely the cleanest solution to this problem.
+;; Currently, the codec module only uses the color-related procedures defined here.
+
+;; Alternatively, you could move color support into a codec defined here too.
+;; That would prevent the codec module from needing the color-related code at all.
+
+(use-modules (arc util codecs))
+
 (define (dconf-gtk-settings config)
   (let* ((theme (home-theming-configuration-theme config))
          (gtk-name (gtk-theme-name (theme-gtk-theme theme)))
@@ -339,11 +357,6 @@
          (icon-theme #$icons-name)
          (font-name #$(encode fc sans-font-name sans-font-size))
          (monospace-font-name #$(encode fc mono-font-name mono-font-size))))))
-
-(define (theme-file->blocks file)
-  (list (merged-file-block
-         (content file)
-         (priority 15))))
 
 (define-public home-theming-service-type
   (service-type
@@ -362,12 +375,17 @@
                              (icon-pack-package (theme-icon-pack theme))
                              (gtk-theme-package (theme-gtk-theme theme))))))
 
+     ;; TODO: Change the API for services extending this one.
+     ;; Instead of allowing for a surface-level procedure, it should take an association list instead.
+     ;; First, this would allow services to define multiple files if they wanted.
+     ;; Second, their file generation procedures wouldn't have to return cons cells directly.
+     
      (service-extension home-merge-files-service-type
                         (lambda (config)
                           (with-theme (home-theming-configuration-theme config)
                             (filter-map (lambda (target)
                                           (and-let* ((entry (call-or-value (theming-target-file target))))
-                                            (cons (car entry) (theme-file->blocks (cdr entry)))))
+                                            (cons (car entry) (file->blocks (cdr entry) 15))))
                                         (home-theming-configuration-targets config)))))
      
      (service-extension home-environment-variables-service-type

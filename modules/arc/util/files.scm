@@ -43,6 +43,14 @@
         merged-file-block-content
         merged-file-block-priority)
 
+(define* (file->blocks file #:optional (priority 50))
+  "Turn FILE into a list of one <merged-file-block> record.
+The block will also be assigned PRIORITY, which defaults to 50."
+  (list (merged-file-block
+         (content file)
+         (priority priority))))
+(export file->blocks)
+
 (define (path->merged-name path)
   "Given a target PATH, generate a name suitable for a merged file in the store."
   (string-append "merged-" (basename path)))
