@@ -30,8 +30,11 @@
    "du-dust"
 
    ;; Networking
-   "wget"
    (list isc-bind "utils")
+
+   ;; File Transfer
+   "wget"
+   "croc"
 
    ;; Data Manipulation
    "jq"

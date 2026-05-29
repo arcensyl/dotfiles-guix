@@ -29,11 +29,20 @@ alias up := update
     sudo mkfs.fat -F32 -n 'guix-boot' '{{boot}}'
     sudo mkfs.ext4 -L 'guix-root' '{{root}}'
     sudo mkswap -L 'guix-swap' '{{swap}}'
-    
+
+    @# Waiting for file updates...
+    # If we try to mount too early, the command will freeze.
+    # Hopefully, calling 'sync' and sleeping for a second is enough.
+    sync
+    sleep 1
+
     @# Mounting target system...
     sudo mount '{{root}}' /mnt
     sudo mkdir -p /mnt/boot/efi
     sudo mount '{{boot}}' /mnt/boot/efi
+    
+    @# Deploying Guix channels...
+    guix pull --channels=channels.scm
     
     @# Building system...
     GUIX_HOSTNAME='{{host}}' sudo -E guix system init main.scm /mnt
@@ -56,6 +65,9 @@ alias up := update
     @# Deploying unmanaged symlinks...
     ln -sf ~/.dotfiles/guix/channels.scm ~/.config/guix/channels.scm
     ln -sf ~/.dotfiles/live/* ~/.config/
+    
+    @# Deploying Guix channels...
+    guix pull
     
     @# Building Nix profile...
     nix run 'path:gen/nix#profile.switch'

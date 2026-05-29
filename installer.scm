@@ -39,8 +39,12 @@
  (feat-require 'cli-modern)
 
  (use-packages
-  "neovim"
-  "parted")
+  ;; Storage and File Systems
+  "dosfstools"
+  "parted"
+
+  ;; Misc.
+  "neovim")
 
  (run-on-home-activation
   #~(begin
