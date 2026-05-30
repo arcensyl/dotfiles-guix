@@ -207,6 +207,9 @@
   (operating-system
    (inherit (make-basic-system))
 
+   (firmware (list linux-firmware
+                   sof-firmware))
+
    (services
     (append service-queue
             (modify-services %desktop-services
