@@ -25,7 +25,7 @@
   #:use-module (arc theming)
   #:use-module (arc util features)
   #:use-module (arc util misc)
-  #:use-module (arc packages nyxt))
+  #:use-module (arc packages browsers))
 
 (define-record-type* <home-nyxt-configuration>
   home-nyxt-configuration make-home-nyxt-configuration
