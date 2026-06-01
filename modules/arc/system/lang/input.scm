@@ -59,6 +59,17 @@
    
    (stop #~(make-kill-destructor))))
 
+;; TODO: Consider adding support for other versions of GTK (2, 4).
+
+;; As Guix doesn't automatically detect Nix's Fcitx IM module, we need to tell GTK about it.
+;; This cache file allows Guix GTK applications to use the module from Nix's 'fcitx5-gtk' package.
+
+(define gtk3-immodules-cache
+  (mixed-text-file "fcitx5-nix-immodule-gtk3.cache"
+                   "\"" (getenv "HOME") "/.nix-profile/lib/gtk-3.0/3.0.0/immodules/im-fcitx5.so\"\n"
+                   "\"fcitx\" \"Fcitx5\" \"gtk30\" \""
+                   (getenv "HOME") "/.nix-profile/share/locale\" \"\" \n"))
+
 (define home-fcitx-service-type
   (service-type
    (name 'home-fcitx)
@@ -76,7 +87,8 @@
      
      (service-extension home-environment-variables-service-type
                         (lambda (_)
-                          '(("GTK_IM_MODULE" . "fcitx")
+                          `(("GUIX_GTK3_IM_MODULE_FILE" . ,gtk3-immodules-cache)
+                            ("GTK_IM_MODULE" . "fcitx")
                             ("QT_IM_MODULE" . "fcitx")
                             ("XMODIFIERS" . "@im=fcitx"))))
 

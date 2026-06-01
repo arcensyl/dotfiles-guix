@@ -38,6 +38,10 @@
   (daemon? home-emacs-configuration-daemon?
            (default #f)))
 
+;; HACK: For some accursed reason, Emacs lags when it sees the GTK module for Nix's Fcitx.
+;; As I use the Mozc package for Emacs, I just prevent it from finding Fcitx at runtime.
+;; This is likely an issue in the PGTK version of Emacs.
+
 (define (home-emacs-shepherd-service config)
   (shepherd-service
    (documentation "Run Emacs, the hackable text editor, as a daemon.")
@@ -46,7 +50,9 @@
    (start #~(make-forkexec-constructor
              (list #$(file-append (home-emacs-configuration-package config)
                                   "/bin/emacs")
-                   "--fg-daemon")))
+                   "--fg-daemon")
+             #:environment-variables (append (default-environment-variables)
+                                             (list "GUIX_GTK3_IM_MODULE_FILE=\"\""))))
 
    (stop #~(make-kill-destructor))))
 
