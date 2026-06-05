@@ -23,6 +23,7 @@
   #:use-module (guix records)
   #:use-module (arc core)
   #:use-module (arc theming)
+  #:use-module (arc theming colors)
   #:use-module (arc util features)
   #:use-module (arc util misc)
   #:use-module (arc packages browsers))

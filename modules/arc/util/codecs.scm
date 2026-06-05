@@ -1,7 +1,7 @@
 (define-module (arc util codecs)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-2)
-  #:use-module (arc theming)
+  #:use-module (arc theming colors)
   #:use-module (arc util misc))
 
 (define* (encode codec #:rest args)
@@ -54,6 +54,14 @@ For example, it'll automatically wrap a string in quotes."
 Depending on that boolean's value, it will return \"yes\" or \"no\"."
   (if (boolean? x)
       (if x "yes" "no")
+      #f))
+
+(define-public (snake-codec x)
+  "A simple codec that takes a symbol as its only argument.
+The encoded symbol will be converted from kebab to snake case."
+  (if (symbol? x)
+      (string-map (lambda (c) (if (char=? c #\-) #\_ c))
+                  (symbol->string x))
       #f))
 
 ;; TODO: Allow list codecs to work recursively.
@@ -182,3 +190,20 @@ If SUFFIX isn't provided, PREFIX will be added to both sides."
     (and-let* ((res (apply inner args)))
       (wrap-string res prefix suffix))))
 (export make-wrapping-codec)
+
+;; This codec takes a single pair of integers.
+(define-public resolution-codec
+  (let ((nc (make-guarded-codec basic-codec number?)))
+    (make-pair-codec nc #f "x")))
+
+(define-public lua-value-codec
+  (letrec ((vc (make-chain-codec tc snake-codec prog-codec))
+           (pc (make-pair-codec snake-codec vc " = "))
+           (lc (make-list-codec (make-chain-codec pc vc) ", "))
+           (tc (make-wrapping-codec lc "{" "}")))
+    vc))
+
+(define-public lua-call-codec
+  (let* ((lc (make-list-codec lua-value-codec ", "))
+         (lc (make-wrapping-codec lc "(" ")")))
+    (make-kv-codec snake-codec lc "")))

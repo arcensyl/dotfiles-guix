@@ -226,17 +226,3 @@ Note that 'Z' is used for the super modifier key, and 'M' is for the alt modifie
 
     ('function "f")
     (other other)))
-
-;; TODO: Move this to the same file defining a Hyprland service.
-;; TODO: Rewrite this for Hyprland's new Lua config system.
-
-(define-matcher (keybind->hypr bind)
-  "Convert BIND to a string following Hyprlang's syntax for keybinds."
-  (($ <keybind> key modifiers variant)
-   (string-upcase
-    (string-append
-     (string-join (map key->xbd modifiers))
-     ", "
-     (key->xbd key)
-     (if variant (number->string variant) "")))))
-(export keybind->hypr)

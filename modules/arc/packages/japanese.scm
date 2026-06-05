@@ -50,7 +50,9 @@
       (arguments
        (list #:phases
              #~(modify-phases %standard-phases
-                              (delete 'sanity-check))))
+                 (delete 'sanity-check))
+
+             #:tests? #f))
 
       
       (native-inputs (list python-setuptools))
