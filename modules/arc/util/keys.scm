@@ -62,21 +62,31 @@ This includes all alphanumeric characters, and all symbols besides dashes and an
   
   key)
 
+;; (define (get-key-variant key)
+;;   "Return the variant specified by KEY.
+;; Currently, only function keys have variants."
+;;   (cond ((string-prefix? "<fn:" key)
+;;          (let* ((key-no-prefix (string-drop key 4))
+;;                 (raw-code (string-drop-right key-no-prefix 1))
+;;                 (code (string->number raw-code)))
+;;            (if code
+;;                code
+;;                (error "Function key arugment must be an integer"))))
+;;         (else #f)))
+
 (define (get-key-variant key)
-  "Return the variant specified by KEY.
-Currently, only function keys have variants."
-  (cond ((string-prefix? "<fn:" key)
-         (let* ((key-no-prefix (string-drop key 4))
-                (raw-code (string-drop-right key-no-prefix 1))
-                (code (string->number raw-code)))
-           (if code
-               code
-               (error "Function key arugment must be an integer"))))
-        (else #f)))
+  "Return the variant specified by KEY."
+  (let ((parts (string-split key #\:)))
+    (if (>= (length parts) 2)
+        (let ((trimmed (string-trim-right (cadr parts) #\>)))
+          (or (string->number trimmed)
+              trimmed))
+        #f)))
 
 (define (parse-special-key key)
   "Parse KEY, the base key in a keybind.
-This is like 'parse-key', but for special keys that can't be directly represented in a keybind specification.
+This is like 'parse-key', but for keys that can't be represented by a single character.
+
 KEY should be a string containing the key's name surrounded by angle brackets.
 Function keys should be specified like '<fn:N>', where N is the number of a specific function key."
   (unless (string-suffix? ">" key)
@@ -111,7 +121,14 @@ Function keys should be specified like '<fn:N>', where N is the number of a spec
     ("<left>" 'arrow-left)
     ("<right>" 'arrow-right)
 
+    ("<scroll_up>" 'scroll-up)
+    ("<scroll_down>" 'scroll-down)
+    
     ((? (lambda (s) (string-prefix? "<fn:" s)) _) 'function)
+    ((? (lambda (s) (string-prefix? "<mouse:" s)) _) 'mouse)
+    ((? (lambda (s) (string-prefix? "<switch:" s)) _) 'switch)
+    ((? (lambda (s) (string-prefix? "<switch_on:" s)) _) 'switch-on)
+    ((? (lambda (s) (string-prefix? "<switch:" s)) _) 'switch-off)
     (other (errorf "Key '~a' is invalid" other))))
 
 (define (parse-modifier mod)
@@ -170,7 +187,22 @@ Note that 'Z' is used for the super modifier key, and 'M' is for the alt modifie
           (variant #,(get-key-variant key))))))))
 (export kb)
 
-(define (key->xbd key)
+(define-public (keybind-ensure-valid-variant bind)
+  "Ensure that BIND specifies a variant if it requires one."
+  (let ((key (keybind-key bind))
+        (variant (keybind-variant bind)))
+    (when (and (or (eq? key 'function)
+                   (eq? key 'mouse))
+               (or (not variant) (number? variant)))
+      (errorf "Key '~a' must specify a numeric variant" key))
+
+    (when (and (or (eq? key 'switch)
+                   (eq? key 'switch-on)
+                   (eq? key 'switch-off))
+               (not variant))
+      (errorf "Key '~a' must specify a variant" key))))
+
+(define-public (key->xbd key)
   "Convert KEY to the name used for it in the XKB specification."
   (match key
     ("!" "exclam")
@@ -225,4 +257,14 @@ Note that 'Z' is used for the super modifier key, and 'M' is for the alt modifie
     ('arrow-right "right")
 
     ('function "f")
+
+    ;; Hyprland-specific keys:
+    ('scroll-up "mouse_up")
+    ('scroll-down "mouse_down")
+    ('mouse "mouse:")
+    ('switch "switch:")
+    ('switch-on "switch:on:")
+    ('switch-off "switch:off:")
+    
+    ((? symbol? _) (symbol->string key))
     (other other)))

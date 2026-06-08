@@ -27,7 +27,9 @@
   #:use-module (arc theming)
   #:use-module (arc theming colors)
   #:use-module (arc util features)
-  #:use-module (arc system shells))
+  #:use-module (arc util keys)
+  #:use-module (arc system shells)
+  #:use-module (arc de hypr))
 
 (define-record-type* <home-emacs-configuration>
   home-emacs-configuration make-home-emacs-configuration
@@ -147,4 +149,6 @@
              (package emacs-pgtk)
              (daemon? #t))))
 
-  (provide-shell-alias "emacs" "emacsclient -c"))
+  (provide-shell-alias "emacs" "emacsclient -c")
+
+  (bind-hypr (kb "C-M-t") '(exec-cmd "emacsclient -cn")))

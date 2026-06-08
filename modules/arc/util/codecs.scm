@@ -58,10 +58,14 @@ Depending on that boolean's value, it will return \"yes\" or \"no\"."
 
 (define-public (snake-codec x)
   "A simple codec that takes a symbol as its only argument.
-The encoded symbol will be converted from kebab to snake case."
+The encoded symbol will be converted from kebab to snake case.
+
+As a bonus, trailing '?' characters are also removed."
   (if (symbol? x)
-      (string-map (lambda (c) (if (char=? c #\-) #\_ c))
-                  (symbol->string x))
+      (string-trim-right
+       (string-map (lambda (c) (if (char=? c #\-) #\_ c))
+                   (symbol->string x))
+       #\?)
       #f))
 
 ;; TODO: Allow list codecs to work recursively.
@@ -196,11 +200,16 @@ If SUFFIX isn't provided, PREFIX will be added to both sides."
   (let ((nc (make-guarded-codec basic-codec number?)))
     (make-pair-codec nc #f "x")))
 
+;; NOTE: The Lua codec has to support resoltions directly.
+;; If it's handled by the Hypr codec, then resolutions can't be used in tables.
+;; My Hyprland service requires this to generate the configuration for monitors.
+
 (define-public lua-value-codec
-  (letrec ((vc (make-chain-codec tc snake-codec prog-codec))
+  (letrec ((vc (make-chain-codec tc rc snake-codec prog-codec))
            (pc (make-pair-codec snake-codec vc " = "))
            (lc (make-list-codec (make-chain-codec pc vc) ", "))
-           (tc (make-wrapping-codec lc "{" "}")))
+           (tc (make-wrapping-codec lc "{" "}"))
+           (rc (make-wrapping-codec resolution-codec "\"")))
     vc))
 
 (define-public lua-call-codec

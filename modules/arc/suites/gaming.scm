@@ -16,9 +16,10 @@
 ;;; with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (arc suites gaming)
-  #:use-module (gnu)
   #:use-module (arc core)
   #:use-module (arc util features)
+  #:use-module (arc util keys)
+  #:use-module (arc de hypr)
   #:use-module (arc packages gamescope))
 
 (define-feature gaming
@@ -31,4 +32,6 @@
    ;; Game Stores and Launchers
    "steam"
    "heroic"
-   "prismlauncher"))
+   "prismlauncher")
+
+  (bind-hypr (kb "C-M-s") '(exec-cmd "steam")))

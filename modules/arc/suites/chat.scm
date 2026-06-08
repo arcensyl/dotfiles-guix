@@ -19,7 +19,9 @@
   #:use-module (gnu)
   #:use-module (arc core)
   #:use-module (arc util features)
-  #:use-module (arc system flatpak))
+  #:use-module (arc util keys)
+  #:use-module (arc system flatpak)
+  #:use-module (arc de hypr))
 
 (define-feature chat
   (feat-require 'flatpak)
@@ -27,4 +29,7 @@
   (use-home-packages "mumble")
   (use-flatpaks "dev.vencord.Vesktop")
   
-  (provide-flatpak-alias "vesktop" "dev.vencord.Vesktop"))
+  (provide-flatpak-alias "vesktop" "dev.vencord.Vesktop")
+
+  (bind-hypr (kb "C-M-c")
+             '(exec-cmd "flatpak run dev.vencord.Vesktop")))
