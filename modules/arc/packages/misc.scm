@@ -18,6 +18,8 @@
 (define-module (arc packages misc)
   #:use-module (gnu packages)
   #:use-module (gnu packages golang-xyz)
+  #:use-module (gnu packages lua)
+  #:use-module (gnu packages game-development)
   #:use-module (guix packages)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix gexp)
@@ -87,6 +89,55 @@
              '("java" "javac" "jar" "javadoc"))))))
     
     (synopsis (string-append "Wrapper for version " (package-version java-package) " of "(package-name java-package)))
-    (description "Provides version-prefixed binaries for a specific OpenJDK.")
+    (description "Provides version-prefixed binaries for a specific Java package.")
     (license (package-license java-package))
     (home-page (package-home-page java-package))))
+
+(define-public luajit-rubicon
+  (package
+   (inherit luajit-lua52-openresty)
+
+   (name "luajit-rubicon")
+   (version "2026-06-18")
+
+   (source
+    (origin
+     (method git-fetch)
+     (uri (git-reference
+           (url "https://github.com/DreamWeave-MP/rubic0n")
+           (commit "4059de7fe88a16915861621b83735919ba828567")))
+     (file-name (git-file-name name version))
+     (sha256
+      (base32 "1q5cb0fzz112d87bxdvknx69hnvvwpw083p5bil4w7bj1njb9vxq"))))
+
+   (home-page "https://github.com/DreamWeave-MP/rubic0n")
+   (synopsis "LuaJIT fork optimized for the OpenMW game engine")
+   (description "Rubic0n is a fork of LuaJIT designed to improve the performance of Lua scripts written for the OpenMW game engine.")
+   (license license:expat)))
+
+;; NOTE: The following package uses version 0.51 of OpenMW, which is ahead of the upstream base package.
+;; When the base package is updated to 0.51, this should be changed to track upstream.
+
+(define-public openmw-rubicon
+  (package
+   (inherit openmw)
+
+   (name "openmw-rubicon")
+   (version "0.51.0")
+
+   (source
+    (origin
+     (method git-fetch)
+     (uri (git-reference
+           (url "https://github.com/OpenMW/openmw")
+           (commit (string-append "openmw-" version))))
+     (file-name (git-file-name name version))
+     (sha256
+      (base32 "0jhk4zmdryx9wcpw1p0k0s0p4rryv3bb66hspn1kj0k40h8sgv8g"))))
+
+   (inputs
+    (modify-inputs (package-inputs openmw)
+      (replace "luajit" luajit-rubicon)))
+
+   (synopsis "OpenMW with optimized Lua scripting")
+   (description "The OpenMW game engine with Rubic0n, a fork of LuaJIT optimized specifically for it.")))
