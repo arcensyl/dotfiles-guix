@@ -20,6 +20,8 @@
   #:use-module (gnu services shepherd)
   #:use-module (gnu home services shepherd)
   #:use-module (arc core)
+  #:use-module (arc system nix)
+  #:use-module (arc system shells)
   #:use-module (arc util features))
 
 (define home-wayland-shepherd-service
@@ -50,6 +52,8 @@
 (define-feature-stub graphics)
 
 (define-feature wayland
+  (feat-require 'nix)
+  
   (use-home-packages
    ;; Wayland-specific Tools
    "wl-clipboard"
@@ -62,4 +66,9 @@
                    home-shepherd-service-type
                    (list home-wayland-shepherd-service)))
 
+  ;; NOTE: This is required for Nix applications to use OpenGL or Vulkan.
+  ;; NixGL should probably be intalled via my generated flake, but this works for now.
+  
+  (provide-shell-alias "with-gl" "nix run --override-input nixpkgs 'github:nixos/nixpkgs/nixos-unstable' --impure 'github:nix-community/nixGL' --")
+  
   (feat-provide 'graphics))
