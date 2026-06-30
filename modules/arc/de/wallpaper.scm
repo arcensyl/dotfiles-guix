@@ -26,17 +26,14 @@
   #:use-module (arc theming)
   #:use-module (arc system graphics))
 
-;; TODO: Consider writing a custom package for AWWW.
-;; AWWW is just a newer, renamed version of SWWW.
-
-(define home-swww-shepherd-service
+(define home-awww-shepherd-service
   (shepherd-service
-   (documentation "Run the SWWW wallpaper daemon.")
-   (provision '(swww))
+   (documentation "Run the AWWW wallpaper daemon.")
+   (provision '(awww))
    (requirement '(graphical-session))
 
    (start #~(make-forkexec-constructor
-             (list #$(file-append swww "/bin/swww-daemon"))
+             (list #$(file-append awww "/bin/awww-daemon"))
              #:environment-variables (cons* (string-append "WAYLAND_DISPLAY="
                                                            #$(or (getenv "WAYLAND_DISPLAY")
                                                                  "wayland-1"))
@@ -44,25 +41,26 @@
 
    (stop #~(make-kill-destructor))))
 
-;; TODO: Once I have a Hyprland service, have Hyprland interact with SWWW directly.
+;; TODO: Once I have a Hyprland service, have Hyprland interact with AWWW directly.
+;; TODO: Why does the generated AWWW script not have execute permission?
 
-(define (write-home-swww-script)
-  (cons ".dotfiles/guix/gen/swww-init.sh"
-        (computed-file "swww-init.sh"
+(define (write-home-awww-script)
+  (cons ".dotfiles/guix/gen/awww-init.sh"
+        (computed-file "awww-init.sh"
                        #~(begin
                            (call-with-output-file #$output
                              (lambda (port)
                                (display "#!/usr/bin/env bash\n\n" port)
-                               (display (string-append "swww img -t none " 
+                               (display (string-append "awww img -t none " 
                                                          #$(theme-wallpaper (current-theme)))
                                         port)
                                (display "\n" port)))
                            (chmod #$output #o755)))))
 
-(define-public home-swww-service-type
+(define-public home-awww-service-type
   (service-type
-   (name 'home-swww)
-   (description "Home service for running the SWWW wallpaper daemon.")
+   (name 'home-awww)
+   (description "Home service for running the AWWW wallpaper daemon.")
 
    (default-value '())
 
@@ -70,16 +68,16 @@
     (list
      (service-extension home-profile-service-type
                         (lambda (_)
-                          (list swww)))
+                          (list awww)))
 
      (service-extension home-shepherd-service-type
                         (lambda (_)
-                          (list home-swww-shepherd-service)))
+                          (list home-awww-shepherd-service)))
 
      (service-extension home-theming-service-type
                         (lambda (_)
                           (list
                            (theming-target
-                            (provision '(swww))
-                            (file write-home-swww-script)))))))))
+                            (provision '(awww))
+                            (file write-home-awww-script)))))))))
 

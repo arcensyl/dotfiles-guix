@@ -232,7 +232,7 @@ wallpaper {
 (define-feature hyprland
   (feat-require 'wayland)
   
-  (use-home-service (service home-swww-service-type))
+  (use-home-service (service home-awww-service-type))
 
   (defer
     (use-home-service
