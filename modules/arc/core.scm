@@ -265,6 +265,7 @@
   (use-packages
    ;; Libraries and Toolchains
    "gcc-toolchain"
+   "perl"
    "ncurses"
 
    ;; CLI Essentials
