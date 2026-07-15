@@ -29,6 +29,11 @@
 ;; Syncthing will try and automatically update this config, causing conflicts with Guix.
 ;; This hack avoids this by overloading the config generator so it does the migration itself.
 
+;; Please note that this solution is extremely fragile.
+;; First of all, it'll need to be updated everytime Syncthing changes its schema.
+;; Second, this will break whenever Guix updates to use a newer version of that schema.
+;; Hopefully though, in the latter case, my fix will no longer be needed.
+
 (let ((mod (resolve-module '(gnu services syncthing))))
   (define serialize-syncthing-config-file/base
     (module-ref mod 'serialize-syncthing-config-file))
