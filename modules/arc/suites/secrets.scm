@@ -29,4 +29,5 @@
             (home-gpg-agent-configuration
              (pinentry-program (file-append (specification->package "pinentry-qt")
                                             "/bin/pinentry"))
-             (ssh-support? #t)))))
+             (ssh-support? #t)
+             (extra-content "allow-emacs-pinentry\nallow-loopback-pinentry")))))
