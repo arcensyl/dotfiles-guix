@@ -18,6 +18,7 @@
 (define-module (arc suites mail)
   #:use-module (arc core)
   #:use-module (arc system nix)
+  #:use-module (arc system shells)
   #:use-module (arc util features))
 
 ;; TODO: Write custom services so mail sync can be set up via Guix.
@@ -28,7 +29,10 @@
   
   (use-home-packages
    "isync"
+   "cyrus-sasl-xoauth2"
    "msmtp"
    "mu")
 
-  (use-nix-packages "oama"))
+  (use-nix-packages "oama")
+
+  (provide-env-var "SASL_PATH" "$HOME/.guix-home/profile/lib/sasl2"))
