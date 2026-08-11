@@ -33,6 +33,7 @@
   #:use-module (arc util files)
   #:use-module (arc util defer)
   #:use-module (arc util misc)
+  #:use-module (arc system hardware)
   #:use-module (arc system shells)
   #:use-module (arc system nix)
   #:use-module (arc system flatpak))
@@ -253,7 +254,9 @@
 (define-feature core
   (feat-require 'nix)
   (feat-require 'shell)
-  
+
+  (feat-require 'auto-brightness-dyn)
+    
   (use-substitute-server "https://substitutes.nonguix.org")
   (use-substitute-key (local-file "../../keys/nonguix.pub"))
 
@@ -261,7 +264,7 @@
   (provide-env-var-segment "PATH" "$HOME/.dotfiles/guix/scripts")
 
   (provide-shell-alias "gx" "guix")
-
+  
   (use-packages
    ;; Libraries and Toolchains
    "gcc-toolchain"
@@ -275,4 +278,9 @@
 
    ;; Config-related Tools
    "git"
-   "just"))
+   "just")
+
+  (defer
+    (when (eq? system-type 'laptop)
+      (use-packages
+       "brightnessctl"))))
