@@ -205,11 +205,11 @@ If SUFFIX isn't provided, PREFIX will be added to both sides."
 ;; My Hyprland service requires this to generate the configuration for monitors.
 
 (define-public lua-value-codec
-  (letrec ((vc (make-chain-codec tc rc snake-codec prog-codec))
-           (pc (make-pair-codec snake-codec vc " = "))
-           (lc (make-list-codec (make-chain-codec pc vc) ", "))
-           (tc (make-wrapping-codec lc "{" "}"))
-           (rc (make-wrapping-codec resolution-codec "\"")))
+  (letrec* ((vc (make-chain-codec tc rc snake-codec prog-codec))
+            (pc (make-pair-codec snake-codec vc " = "))
+            (lc (make-list-codec (make-chain-codec pc vc) ", "))
+            (tc (make-wrapping-codec lc "{" "}"))
+            (rc (make-wrapping-codec resolution-codec "\"")))
     vc))
 
 (define-public lua-call-codec
