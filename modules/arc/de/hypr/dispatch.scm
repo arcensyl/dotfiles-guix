@@ -103,7 +103,7 @@ For more details, please see the documentation for 'register-dispatcher-macro!'.
       (error "Lua expression must be a string")))
 
 ;; Return Lua VAL without modification.
-;; This is mainly useful when combined with something like 'scm.begin'.
+;; This is mainly useful when combined with something like 'dm.begin'.
 ;; This macro's emitted Lua code is always eagerly evaluated.
 (define-dispatcher-macro (dm.value _ val)
   (encode hypr-value-codec val))
@@ -136,6 +136,35 @@ For more details, please see the documentation for 'register-dispatcher-macro!'.
                                                           ", ")
                                              ")")))
 
+;; Compare the values of LEFT and RIGHT, returning true if they are equal.
+;; When non-eager, create a predicate function that runs this comparison.
+(define-dispatcher-macro (dm.eq eager? left right)
+  (maybe-wrap-in-lua-function eager?
+                              (string-append (encode hypr-value-codec left)
+                                             " == "
+                                             (encode hypr-value-codec right))))
+
+(define-dispatcher-macro (dm.eq* eager? left right)
+  (maybe-wrap-in-lua-function eager?
+                              (string-append (expand-hypr-dispatcher left #:eager? #t)
+                                             " == "
+                                             (expand-hypr-dispatcher right #:eager? #t))))
+
+;; If the dispatcher COND returns true, run the dipatcher THEN.
+;; Otherwise, run the dispatcher ELSE.
+;; Note that ELSE is optional.
+(define-dispatcher-macro (dm.if eager? cond then #:optional else)
+  (maybe-wrap-in-lua-function eager?
+                              (string-append "if " (expand-hypr-dispatcher cond #:eager? #t)
+                                             " then " (expand-hypr-dispatcher then #:eager? #t)
+                                             
+                                             (if else
+                                                 (string-append " else "
+                                                                (expand-hypr-dispatcher else #:eager? #t))
+                                                 "")
+
+                                             " end"))
+  
 ;; Run each expression in DISPATCHERS, returning the final result.
 ;; This is similar to the 'begin' macro in Scheme itself.
 ;; Expressions can also access previous results through the 'val' table. 
