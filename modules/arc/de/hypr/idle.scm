@@ -29,6 +29,10 @@
   #:use-module (arc util misc)
   #:use-module (arc de hypr codecs))
 
+;; TODO: Move this to a dedicated module for screen lockers.
+
+(define-public system-lock-command #f)
+
 (define-record-type* <home-hypridle-configuration>
   home-hypridle-configuration make-home-hypridle-configuration
   home-hypridle-configuration?
@@ -179,4 +183,5 @@
     (use-home-service
      (service home-hypridle-service-type
               (home-hypridle-configuration
-               (listeners listener-queue))))))
+               (listeners listener-queue)
+               (lock-command system-lock-command))))))
