@@ -109,6 +109,9 @@
   (monitors home-hyprland-configuration-monitors
             (default '()))
 
+  (devices home-hyprland-configuration-devices
+           (default '()))
+  
   (keybinds home-hyprland-configuration-keybinds
             (default '()))
 
@@ -118,6 +121,7 @@
         home-hyprland-configuration?
         home-hyprland-configuration-package
         home-hyprland-configuration-monitors
+        home-hyprland-configuration-devices
         home-hyprland-configuration-keybinds
         home-hyprland-configuration-option-sets)
 
@@ -134,6 +138,11 @@
                                        'hl.monitor
                                        (list (hypr-monitor->encodable mon))))
                              (home-hyprland-configuration-monitors config))
+                        "\n")
+                       "\n--- Devices"
+                       (string-join
+                        (map (lambda (dev) (encode cc 'hl.device (list dev)))
+                             (home-hyprland-configuration-devices config))
                         "\n")
                        "\n--- Keybinds"
                        (string-join
@@ -217,11 +226,15 @@ wallpaper {
                             (file write-home-hyprpaper-configuration)))))))))
 
 (define *hypr-monitors* '())
+(define *hypr-devices* '())
 (define *hypr-keybinds* '())
 (define *hypr-option-sets* '())
 
 (define-public (use-hypr-monitor monitor)
   (push! *hypr-monitors* monitor))
+
+(define-public (use-hypr-device device)
+  (push! *hypr-devices* device))
 
 (define-public (bind-hypr bind dispatcher)
   (push! *hypr-keybinds* (cons bind dispatcher)))
@@ -239,5 +252,6 @@ wallpaper {
      (service home-hyprland-service-type
               (home-hyprland-configuration
                (monitors (reverse *hypr-monitors*))
+               (devices (reverse *hypr-devices*))
                (keybinds (reverse *hypr-keybinds*))
                (option-sets (reverse *hypr-option-sets*)))))))
