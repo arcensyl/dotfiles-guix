@@ -163,7 +163,7 @@ For more details, please see the documentation for 'register-dispatcher-macro!'.
                                                                 (expand-hypr-dispatcher else #:eager? #t))
                                                  "")
 
-                                             " end"))
+                                             " end")))
   
 ;; Run each expression in DISPATCHERS, returning the final result.
 ;; This is similar to the 'begin' macro in Scheme itself.
