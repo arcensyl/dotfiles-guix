@@ -27,6 +27,7 @@
   #:use-module (gnu services sound)
   #:use-module (gnu home)
   #:use-module (gnu home services)
+  #:use-module (gnu packages curl)
   #:use-module (guix)
   #:use-module (nongnu packages linux)
   #:use-module (arc util features)
@@ -274,7 +275,7 @@
    ;; CLI Essentials
    "fastfetch"
    "openssh"
-   "curl"
+   curl
 
    ;; Config-related Tools
    "git"
