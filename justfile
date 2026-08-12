@@ -99,10 +99,10 @@ alias up := update
     nix flake update --flake 'path:gen/nix'
     
     @# Pull complete. Rebuilding system...
-    sleep 1 # Wait for Guix Home activation.
     sudo -E guix system reconfigure main.scm
     
     @# Rebuilding Nix profile...
+    sleep 1 # Wait for Guix Home activation.
     nix run 'path:gen/nix#profile.switch'
     
     # Package pinning doesn't currently work because the '/etc/nix' directory is read-only.

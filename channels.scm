@@ -26,12 +26,16 @@
           "B0F2 D6C5 2936 95FD 57B5  D255 77BC 6345 B65D 6CFB"))))
       (channel
        (name 'guix-gaming-games)
-       (url "https://gitlab.com/guix-gaming-channels/games.git")
-       (introduction
-        (make-channel-introduction
-         "c23d64f1b8cc086659f8781b27ab6c7314c5cca5"
-         (openpgp-fingerprint
-          "50F3 3E2E 5B0C 3D90 0424  ABE8 9BDC F497 A4BB CC7F"))))
+
+       ;; TODO: Switch back to the upstream version of this channel.
+       ;; This channel currently depends on the another channel, 'guix-past'.
+       ;; As 'guix-past' is currently broken, this channel is broken too.
+
+       ;; I'm now using a new fork which removes the broken dependency.
+       ;; As of writing, this fix has not been merged back into upstream yet.
+       
+       (url "https://gitlab.com/gabor-udvari/games.git")
+       (branch "openssl-1.0"))
       (channel
        (name 'nonguix)
        (url "https://gitlab.com/nonguix/nonguix")

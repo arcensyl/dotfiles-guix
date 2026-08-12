@@ -116,6 +116,8 @@
    (description "Rubic0n is a fork of LuaJIT designed to improve the performance of Lua scripts written for the OpenMW game engine.")
    (license license:expat)))
 
+;; FIXME: My OpenMW package currently fails to build.
+
 (define-public openmw-rubicon
   (package
    (inherit openmw)
