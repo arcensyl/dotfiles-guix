@@ -18,7 +18,7 @@
 (define-module (arc de hypr idle)
   #:use-module (gnu)
   #:use-module (gnu services shepherd)
-  #:use-module (gnu packages wm)
+  #:use-module (gnu packages window-management)
   #:use-module (gnu home services)
   #:use-module (gnu home services shepherd)
   #:use-module (guix records)

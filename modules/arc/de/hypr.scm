@@ -19,7 +19,7 @@
   #:use-module (ice-9 match)
   #:use-module (gnu)
   #:use-module (gnu services shepherd)
-  #:use-module (gnu packages wm)
+  #:use-module (gnu packages window-management)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu home)
   #:use-module (gnu home services)
