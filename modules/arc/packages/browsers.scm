@@ -149,3 +149,81 @@ Note that this is only the \"system\" side of Geckium.
 To finish installation, you need to run the 'install-geckium' script.")
    (home-page (package-home-page firefox-esr))
    (license (package-license firefox-esr))))
+
+;; FIXME: Ensure the Marble browser doesn't conflict with KDE application Marble.
+;; In the developer's own Nix flake, they rename the binary to "marble-browser".
+;; Maybe I should also do the same for my Guix package?
+
+(define-public marble
+  (package
+   (inherit firefox-esr)
+
+   (name "marble")
+   (version "G2-b1.1")
+
+   (source
+    (origin
+     (method git-fetch)
+     (uri (git-reference
+           (url "https://github.com/Erizur/Marble")
+           (commit version)))
+     (file-name (git-file-name "marble" version))
+     (sha256
+      (base32
+       "1jdpbhk4ycbs3257hvhki45a5gha4c2xpnlvpb31gy8jssgnijnh"))))
+
+   (arguments
+    (substitute-keyword-arguments (package-arguments firefox-esr)
+      ((#:phases phases)
+       #~(modify-phases #$phases
+           (replace 'wrap-program
+                    (lambda* (#:key inputs outputs #:allow-other-keys)
+                      (let* ((out (assoc-ref outputs "out"))
+                             (lib (string-append out "/lib"))
+                             (mesa-lib (string-append (assoc-ref inputs "mesa") "/lib"))
+                             (libnotify-lib (string-append (assoc-ref inputs "libnotify") "/lib"))
+                             (libva-lib (string-append (assoc-ref inputs "libva") "/lib"))
+                             (pciaccess-lib (string-append (assoc-ref inputs "libpciaccess") "/lib"))
+                             (pulseaudio-lib (string-append (assoc-ref inputs "pulseaudio") "/lib"))
+                             (pipewire-lib (string-append (assoc-ref inputs "pipewire") "/lib"))
+                             (eudev-lib (string-append (assoc-ref inputs "eudev") "/lib"))
+                             (gtk-share (string-append (assoc-ref inputs "gtk+") "/share"))
+                             (binary (or (false-if-exception
+                                          (car (find-files lib "^marble$")))
+                                         (error "Marble binary not found"))))
+                        (wrap-program binary
+                                      `("LD_LIBRARY_PATH" prefix (,mesa-lib ,libnotify-lib ,libva-lib
+                                                                            ,pciaccess-lib ,pulseaudio-lib
+                                                                            ,eudev-lib ,pipewire-lib))
+                                      `("XDG_DATA_DIRS" prefix (,gtk-share))
+                                      `("MOZ_LEGACY_PROFILES" = ("1"))
+                                      `("MOZ_ALLOW_DOWNGRADE" = ("1"))
+                                      `("MOZ_APP_REMOTINGNAME" = ("marble"))))))
+
+           ;; NOTE: I chose to change Marble's vendor to "Erizur".
+           ;; The project is no longer under the Network Neighborhood organization.
+           ;; Erizur is the current developer, though the browser's branding hasn't been updated.
+           ;; If the vendor is changed upstream, I'll modify or delete the following patch.
+           
+           (add-after 'unpack 'patch-branding
+                      (lambda _
+                        (substitute* "browser/moz.configure"
+                                     (("imply_option\\(\"MOZ_APP_VENDOR\", .*\\)")
+                                      "imply_option(\"MOZ_APP_VENDOR\", \"Erizur\")"))
+
+                        (substitute* "browser/branding/official/branding.nsi"
+                                     (("!define CompanyName .*")
+                                      "!define CompanyName           \"Erizur\""))
+
+                        (substitute* "browser/branding/official/locales/en-US/brand.ftl"
+                                     (("^-vendor-short-name = .*") "-vendor-short-name = Erizur"))
+                        #t))
+
+           ;; TODO: Generate a custom desktop file for Marble.
+           
+           (delete 'install-desktop-entry)
+           (delete 'install-icons)))))
+
+   (home-page "https://github.com/Erizur/Marble")
+   (synopsis "Firefox fork that aims to restore the Photon user interface.")
+   (description "Firefox fork that aims to restore the Photon user interface.")))
