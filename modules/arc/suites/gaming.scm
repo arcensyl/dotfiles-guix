@@ -35,3 +35,11 @@
    "prismlauncher")
 
   (bind-hypr (kb "C-M-s") '(exec-cmd "steam")))
+
+(define-feature gaming-lite
+  (use-home-packages
+   ;; Game-related Utilities
+   gamescope
+
+   ;; Game Stores and Launchers
+   "prismlauncher"))
