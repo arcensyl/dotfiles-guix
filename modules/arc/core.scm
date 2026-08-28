@@ -22,6 +22,7 @@
   #:use-module (ice-9 match)
   #:use-module (gnu)
   #:use-module (gnu services guix)
+  #:use-module (gnu services linux)
   #:use-module (gnu services desktop)
   #:use-module (gnu services xorg)
   #:use-module (gnu services sound)
@@ -64,6 +65,9 @@
 (define file-system-queue '())
 (define swap-space-queue '())
 
+(define kernel-module-queue '())
+(define kernel-argument-queue '())
+
 (define substitute-server-queue '())
 (define substitute-key-queue '())
 
@@ -105,6 +109,16 @@
   (unless (swap-space? swap-space)
     (error "Item passed to 'use-swap-space' was not swap space"))
   (set! swap-space-queue (cons swap-space swap-space-queue)))
+
+(define-public (use-kernel-module mod)
+  (unless (package? mod)
+    (error "Used kernel module is not a package"))
+  (set! kernel-module-queue (cons mod kernel-module-queue)))
+
+(define-public (use-kernel-argument arg)
+  (unless (string? arg)
+    (error "Used kernel argument is not a string"))
+  (set! kernel-argument-queue (cons arg kernel-argument-queue)))
 
 (define-public (use-substitute-server address)
   (unless (string? address)
@@ -166,6 +180,11 @@
    (kernel linux)
    (firmware (list linux-firmware))
 
+   (kernel-loadable-modules kernel-module-queue)
+
+   (kernel-arguments (append kernel-argument-queue
+                             %default-kernel-arguments))
+   
    (host-name (or system-name "guix"))
    (locale system-locale)
    (timezone system-timezone)
@@ -257,7 +276,10 @@
   (feat-require 'shell)
 
   (feat-require 'auto-brightness-dyn)
-    
+
+  (use-service
+   (service kernel-module-loader-service-type))
+  
   (use-substitute-server "https://substitutes.nonguix.org")
   (use-substitute-key (local-file "../../keys/nonguix.pub"))
 

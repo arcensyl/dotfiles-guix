@@ -18,7 +18,10 @@
 (define-module (arc system graphics)
   #:use-module (gnu)
   #:use-module (gnu services shepherd)
+  #:use-module (gnu services base)
+  #:use-module (gnu services linux)
   #:use-module (gnu home services shepherd)
+  #:use-module (nongnu packages nvidia)
   #:use-module (arc core)
   #:use-module (arc system nix)
   #:use-module (arc system shells)
@@ -72,3 +75,27 @@
   (provide-shell-alias "with-gl" "nix run --override-input nixpkgs 'github:nixos/nixpkgs/nixos-unstable' --impure 'github:nix-community/nixGL' --")
   
   (feat-provide 'graphics))
+
+;; This feature can improve the performance of NVIDIA-powered systems.
+;; It mainly just tells the kernel to use the propietary NVIDIA driver.
+
+(define-feature nvidia
+  (use-kernel-module nvidia-module)
+
+  ;; We need to prevent the kernel from loading the open-source NVIDIA driver.
+  ;; If we didn't, we'd likely run into conflicts between the two drivers.
+  
+  (use-kernel-argument "modprobe.blacklist=nouveau")
+
+  (use-service
+   (simple-service 'nvidia-udev-rules
+                   udev-service-type
+                   (list nvidia-driver)))
+
+  (use-service
+   (simple-service 'nvidia-module-loader
+                   kernel-module-loader-service-type
+                   '("ipmi_devintf"
+                     "nvidia"
+                     "nvidia_modeset"
+                     "nvidia_uvm"))))
