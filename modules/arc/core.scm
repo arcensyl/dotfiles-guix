@@ -31,6 +31,7 @@
   #:use-module (gnu packages curl)
   #:use-module (guix)
   #:use-module (nongnu packages linux)
+  #:use-module (nonguix transformations)
   #:use-module (arc util features)
   #:use-module (arc util files)
   #:use-module (arc util defer)
@@ -49,6 +50,16 @@
 (define-public system-timezone "UTC")
 (define-public system-keyboard-layout (keyboard-layout "us"))
 (define-public system-shell 'bash)
+
+;; NOTE: Switching to a non-default NVIDIA driver is tricky.
+;; We need to transform the entire OS record, so we can't do it with a feature.
+
+;; Determines the driver used on systems with a NVIDIA GPU.
+;; If unspecified, the open-source Nouveau driver will be used.
+;;
+;; To see valid options for this setting, please refer to the documentation from Nonguix.
+;; Link: https://gitlab.com/nonguix/nonguix/#nvidia-graphics-card
+(define-public system-nvidia-driver #f)
 
 ;; Settings for the main user, or "master", of this system.
 
@@ -169,6 +180,12 @@
   
   (use-home-service (service home-merge-files-service-type))
 
+  (if system-nvidia-driver
+      ((nonguix-transformation-nvidia #:driver system-nvidia-driver)
+       (make-system-dispatcher))
+      (make-system-dispatcher)))
+
+(define (make-system-dispatcher)
   (match system-type
     ('server (make-basic-system))
     ((or 'desktop 'laptop) (make-desktop-system))

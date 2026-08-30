@@ -136,12 +136,7 @@
 (export home-mpd-service-type)
 
 (define-feature media
-  (use-home-packages
-   ;; Media Manipulation
-   "ffmpeg"
-
-   ;; Playback
-   "mpv")
+  (use-home-packages "mpv")
 
   (use-home-service
    (service home-mpd-service-type
