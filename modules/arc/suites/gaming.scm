@@ -16,9 +16,12 @@
 ;;; with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (arc suites gaming)
+  #:use-module (nongnu packages game-client)
+  #:use-module (nongnu packages nvidia)
   #:use-module (arc core)
   #:use-module (arc util features)
   #:use-module (arc util keys)
+  #:use-module (arc util defer)
   #:use-module (arc de hypr)
   #:use-module (arc packages gamescope))
 
@@ -30,10 +33,15 @@
    "mangohud"
 
    ;; Game Stores and Launchers
-   "steam"
    "heroic"
    "prismlauncher")
 
+  (defer
+    (use-home-packages
+     (if system-nvidia-driver
+         steam-nvidia
+         steam)))
+  
   (bind-hypr (kb "C-M-s") '(exec-cmd "steam")))
 
 (define-feature gaming-lite
