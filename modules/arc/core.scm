@@ -21,6 +21,7 @@
 (define-module (arc core)
   #:use-module (ice-9 match)
   #:use-module (gnu)
+  #:use-module (gnu system privilege)
   #:use-module (gnu services guix)
   #:use-module (gnu services linux)
   #:use-module (gnu services desktop)
@@ -79,6 +80,8 @@
 (define kernel-module-queue '())
 (define kernel-argument-queue '())
 
+(define privileged-program-queue '())
+
 (define substitute-server-queue '())
 (define substitute-key-queue '())
 
@@ -130,6 +133,11 @@
   (unless (string? arg)
     (error "Used kernel argument is not a string"))
   (set! kernel-argument-queue (cons arg kernel-argument-queue)))
+
+(define-public (use-privileged-program prog)
+  (unless (privileged-program? prog)
+    (error "Used privileged program is the wrong type"))
+  (set! privileged-program-queue (cons prog privileged-program-queue)))
 
 (define-public (use-substitute-server address)
   (unless (string? address)
@@ -232,6 +240,10 @@
     (append (hash-map->list (lambda (key _) key) package-queue)
             %base-packages))
 
+   (privileged-programs
+    (append privileged-program-queue
+            %default-privileged-programs))
+   
    (bootloader (bootloader-configuration
                 (bootloader grub-efi-bootloader)
                 (targets (list "/boot/efi"))

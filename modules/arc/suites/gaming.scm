@@ -16,6 +16,8 @@
 ;;; with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (arc suites gaming)
+  #:use-module (gnu system privilege)
+  #:use-module (guix gexp)
   #:use-module (arc core)
   #:use-module (arc util features)
   #:use-module (arc util keys)
@@ -25,7 +27,6 @@
 (define-feature gaming
   (use-home-packages
    ;; Game-related Utilities
-   gamescope
    "protonup"
    "mangohud"
 
@@ -34,12 +35,19 @@
    "heroic"
    "prismlauncher")
 
+  (use-privileged-program
+   (privileged-program
+    (program (file-append gamescope "/bin/gamescope"))
+    (capabilities "cap_sys_nice=eip")))
+  
   (bind-hypr (kb "C-M-s") '(exec-cmd "steam")))
 
 (define-feature gaming-lite
   (use-home-packages
-   ;; Game-related Utilities
-   gamescope
-
    ;; Game Stores and Launchers
-   "prismlauncher"))
+   "prismlauncher")
+
+  (use-privileged-program
+   (privileged-program
+    (program (file-append gamescope "/bin/gamescope"))
+    (capabilities "cap_sys_nice=eip"))))
