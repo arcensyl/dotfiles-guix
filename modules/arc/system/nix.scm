@@ -25,6 +25,7 @@
   #:use-module (arc core)
   #:use-module (arc util features)
   #:use-module (arc util defer)
+  #:use-module (arc util misc)
   #:use-module (arc system shells))
 
 
@@ -52,8 +53,6 @@
          (name "flakey-profile")
          (url "github:lf-/flakey-profile"))))
 
-;; TODO: Add support for declaring Nix package overlays from Guix.
-
 ;; FIXME: Nix's 'flakey-profile' recommends to pin flakes on a root level.
 ;; This fails because the entire '/etc/nix' directory is symlinked to the Guix store.
 ;; Pinning does work on a per-user level, though ideally it'd work with root too.
@@ -64,7 +63,10 @@
 
   (inputs nix-flake-inputs
           (default %base-flake-inputs))
-
+  
+  (overlays nix-flake-overlays
+            (default '()))
+  
   (packages nix-flake-packages
             (default '())))
 (export nix-flake)
@@ -86,7 +88,14 @@
 
   outputs = { self, nixpkgs, flake-utils, flakey-profile, ... }@inputs:
     flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
+      let pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+        overlays = [\n" (string-concatenate (map (lambda (ol)
+                                                   (string-pad (string-append ol "\n")
+                                                               (+ (string-length ol) 11)))
+                                                 (nix-flake-overlays flake))) "        ];
+      };
       in {
         packages.profile = flakey-profile.lib.mkProfile {
           inherit pkgs;
@@ -148,10 +157,28 @@
                                    packages))))))))))
 
 (define used-nix-packages '())
+(define used-nix-inputs '())
+(define used-nix-overlays '())
 
 (define* (use-nix-packages #:rest packages)
+  (when (any (lambda (p) (not (string? p)))
+             packages)
+    (error "All Nix packages must be strings"))
+  
   (set! used-nix-packages (append used-nix-packages packages)))
 (export use-nix-packages)
+
+(define-public (use-nix-input input)
+  (unless (flake-input? input)
+    (error "Used Nix flake input was the wrong type"))
+  
+  (push! used-nix-inputs input))
+
+(define-public (use-nix-overlay overlay)
+  (unless (string? overlay)
+    (error "Used Nix overlay must be a string"))
+  
+  (push! used-nix-overlays overlay))
 
 (define-feature nix
   (use-nix-packages "nh")
@@ -168,4 +195,6 @@
               (home-flake-configuration
                (path ".dotfiles/guix/gen/nix/flake.nix")
                (flake (nix-flake
+                       (inputs (append %base-flake-inputs used-nix-inputs))
+                       (overlays used-nix-overlays)
                        (packages used-nix-packages))))))))

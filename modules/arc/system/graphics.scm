@@ -24,7 +24,8 @@
   #:use-module (arc core)
   #:use-module (arc system nix)
   #:use-module (arc system shells)
-  #:use-module (arc util features))
+  #:use-module (arc util features)
+  #:use-module (arc util defer))
 
 (define home-wayland-shepherd-service
   (shepherd-service
@@ -69,8 +70,23 @@
                    (list home-wayland-shepherd-service)))
 
   ;; NOTE: This is required for Nix applications to use OpenGL or Vulkan.
-  ;; NixGL should probably be intalled via my generated flake, but this works for now.
   
-  (provide-shell-alias "with-gl" "nix run --override-input nixpkgs 'github:nixos/nixpkgs/nixos-unstable' --impure 'github:nix-community/nixGL' --")
+  (use-nix-input
+   (flake-input
+    (name "nixgl")
+    (url "github:nix-community/nixGL")))
+
+  (use-nix-overlay "inputs.nixgl.overlay")
+
+  (defer
+    (use-nix-packages
+     (if system-nvidia-driver
+         "nixgl.auto.nixGLNvidia"
+         "nixgl.nixGLIntel"))
+
+    (provide-shell-alias "nixgl"
+                         (if system-nvidia-driver
+                             "nixGLNvidia"
+                             "nixGLIntel")))
   
   (feat-provide 'graphics))

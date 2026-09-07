@@ -40,6 +40,15 @@ This specifically uses Guile's 'simple-format' procedure."
            (match matched clauses ...))))))
 (export define-matcher)
 
+(define-public (pair-of pred pair)
+  "Return a truthy-value if both sides of PAIR satisfy PRED.
+The specific value is whatever PRED returns when called with PAIR's cdr.
+
+This returns '#f' if PAIR isn't a pair, or PRED isn't satisfied by both sides."
+  (and (pair? pair)
+       (pred (car pair))
+       (pred (cdr pair))))
+
 (define (all-symbols? lst)
   "Return '#t' if all items in LST are symbols.
 Otherwise, return '#f'.
