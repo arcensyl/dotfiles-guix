@@ -31,8 +31,9 @@ alias up := update
     sudo mkswap -L 'guix-swap' '{{swap}}'
 
     @# Waiting for file updates...
-    # If we try to mount too early, the command will freeze.
-    # Hopefully, calling 'sync' and sleeping for a second is enough.
+    # If the new filesystems aren't ready, trying to mount them will fail.
+    # The 'mount' command itself will freeze, preventing us from continuing.
+    # Hopefully, calling 'sync' and sleeping for a second is enough to prevent this.
     sync
     sleep 1
 
@@ -41,7 +42,18 @@ alias up := update
     sudo mkdir -p /mnt/boot/efi
     sudo mount '{{boot}}' /mnt/boot/efi
     
-    @# Deploying Guix channels...
+    # HACK: When using Wi-Fi, DNS resolution on Guix is broken out of the box.
+    # This is caused by a placeholder 'resolv.conf' file, which Network Manager fails to replace.
+    # The solution is to delete the file ourselves, and then restart Network Manager.
+    
+    # For normal systems, this fix only needs to be applied a single time.
+    # If the root directory is impermanent, this needs to be repeated after every reboot.
+    
+    @# Fixing DNS resolution...
+    sudo rm -f /etc/resolv.conf
+    sudo herd restart NetworkManager
+    
+    @# Pulling from Guix channels...
     guix pull --channels=channels.scm
     
     @# Building system...
@@ -66,8 +78,15 @@ alias up := update
     ln -sf ~/.dotfiles/guix/channels.scm ~/.config/guix/channels.scm
     ln -sf ~/.dotfiles/live/* ~/.config/
     
-    @# Deploying Guix channels...
+    @# Fixing DNS resolution...
+    sudo rm -f /etc/resolv.conf
+    sudo herd restart NetworkManager
+    
+    @# Pulling from Guix channels...
     guix pull
+
+    @# Rebuilding system...
+    sudo -E guix system reconfigure main.scm
     
     @# Building Nix profile...
     nix run 'path:gen/nix#profile.switch'
