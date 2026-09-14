@@ -195,9 +195,19 @@ If SUFFIX isn't provided, PREFIX will be added to both sides."
       (wrap-string res prefix suffix))))
 (export make-wrapping-codec)
 
+(define-public toml-codec
+  (let* ((sc (make-guarded-codec identity string?))
+         (zc (make-guarded-codec symbol->string symbol?))
+         (kc (make-chain-codec sc zc))
+         (vc prog-codec)
+         (lc (make-list-codec vc ", "))
+         (lc (make-wrapping-codec lc "[" "]"))
+         (vc (make-chain-codec lc vc)))
+    (make-kv-codec kc vc " = ")))
+
 ;; This codec takes a single pair of integers.
 (define-public resolution-codec
-  (let ((nc (make-guarded-codec basic-codec number?)))
+  (let ((nc (make-guarded-codec number->string number?)))
     (make-pair-codec nc #f "x")))
 
 ;; NOTE: The Lua codec has to support resoltions directly.

@@ -121,6 +121,12 @@ Function keys should be specified like '<fn:N>', where N is the number of a spec
     ("<left>" 'arrow-left)
     ("<right>" 'arrow-right)
 
+    ("<mouse_left>" 'mouse-left)
+    ("<mouse_right>" 'mouse-right)
+    ("<mouse_middle>" 'mouse-middle)
+    ("<mouse_side_1>" 'mouse-side-1)
+    ("<mouse_side_2>" 'mouse-side-2)
+    
     ("<scroll_up>" 'scroll-up)
     ("<scroll_down>" 'scroll-down)
     
@@ -242,6 +248,7 @@ Note that 'Z' is used for the super modifier key, and 'M' is for the alt modifie
     ('shift "shift")
     ('control "ctrl")
     ('escape "escape")
+    ('return "return")
     ('space "space")
     ('tab "tab")
     ('insert "insert")

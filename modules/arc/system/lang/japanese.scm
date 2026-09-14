@@ -20,7 +20,7 @@
   #:use-module (arc core)
   #:use-module (arc util features)
   #:use-module (arc system nix)
-  #:use-module (arc system lang input)
+  #:use-module (arc system input)
   #:use-module (arc system shells))
 
 ;; NOTE: To use Mozc, you will need to manually enable it in Fcitx's configuration.
